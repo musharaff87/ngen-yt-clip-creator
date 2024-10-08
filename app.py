@@ -1,4 +1,6 @@
-from gemini_api import get_brief_content
+from text_to_speech import generate_audio_pyttsx3
+from text_to_speech import generate_audio_gtts
+from text_to_speech import change_pitch
 
 if __name__ == "__main__":
     # Example sentences
@@ -15,5 +17,10 @@ So next time you see a parrot, remember that these amazing creatures are more th
 
     #brief_content = get_brief_content(sentence)
     brief_content = sample_content_1
-    print(f"Brief for '{sentence}':\n{brief_content}\n")
+    main_audio_path = generate_audio_gtts(brief_content, "gtts_sample_us.mp3")
+
+    output_audio = change_pitch(main_audio_path, 0.3)
+    output_audio.export("output_pitched.mp3", format="mp3")
+
+    print(f"Audio file created at: {main_audio_path}")
 

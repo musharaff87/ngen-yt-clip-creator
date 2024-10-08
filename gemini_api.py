@@ -28,6 +28,7 @@ model = genai.GenerativeModel(
 
 
 def get_brief_content(sentence):
+    print("Generating Content from Gemini...")
     # Create a prompt that includes the user's input
     prompt = f"provide a brief, up-to-date description about: {sentence}. Include living and non-living objects where relevant. Make it sound like a YouTuber explaining to viewers in a conversational tone. Also use attracting sentence in the start of the context like eg: did you know? . Also omit sentence like welcome back to channel like that just start talking with viewers.  Limit the response to 300-400 words."
 
@@ -43,7 +44,7 @@ def get_brief_content(sentence):
 
     # Send message and get response
     response = chat_session.send_message(prompt)
-
+    print("Content Generated Successfully")
     return response.text.strip()
 
 
