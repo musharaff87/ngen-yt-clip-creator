@@ -2,3 +2,4 @@ gemini_credential.json
 .idea/
 __pycache__/
 sample_audio/
+test.py
