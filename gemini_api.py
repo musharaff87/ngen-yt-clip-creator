@@ -62,11 +62,12 @@ def generate_search_keywords(formatted_frames, main_content_sentence):
         actual_keyword = frame['actual_keyword']
         prompt = (
             f"this is formatted_frames = {actual_keyword}\n"
-            f"this is main_content = {main_content_sentence}\n\n"
+            # f"this is main_content = {main_content_sentence}\n\n"
             f"Generate relevant search keywords for the actual keyword.\n"
             f"the search keyword must have objects or living things or something sentence that is meaningful to generate images.\n"
             f"also the search keyword should contain 'hd portrait images' like keyword to generate the images. the search keyword should more likely a google search.\n"
-            f"also if the actual keyword doesn't have any meaning then generate random image generation keyword using main_content.\n"
+            # f"also if the actual keyword doesn't have any meaning then generate random image generation keyword using main_content.\n"
+            f"also if the actual keyword doesn't have any meaning then generate random hd image generation keyword related to nature, places around world and animals.\n"
             f"note: Also avoid giving explanation and stuff just give the search_keyword, just give like this 'search_keyword: your answer here'\n"
         )
 
@@ -85,8 +86,15 @@ def generate_search_keywords(formatted_frames, main_content_sentence):
             response = chat_session.send_message(prompt)
         except Exception as e:
             print(f"An error occurred: {e}")
+            print("Retrying time count 1...")
             time.sleep(10)
-            response = chat_session.send_message(prompt)
+            try:
+                response = chat_session.send_message(prompt)
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                print("Retrying time count 2...")
+                time.sleep(30)
+                response = chat_session.send_message(prompt)
         print(f"Response from Gemini: {response}")
 
         # Fix formatting issues in response text

@@ -3,3 +3,6 @@ gemini_credential.json
 __pycache__/
 sample_audio/
 test.py
+selected_images/
+images/
+frames/
