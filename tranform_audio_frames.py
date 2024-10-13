@@ -13,8 +13,9 @@ def transcribe_audio_and_format(audio_file):
 
     # Loop through the segments and create the frame structure
     for segment in result['segments']:
-        start_time = round(segment['start'], 2)
-        end_time = round(segment['end'], 2)
+        start_time = round(segment['start'], 5)
+        end_time = round(segment['end'], 5)
+        print(f"start_time: {start_time}, start time segment: {segment['start']}, end_time: {end_time}, end time segment: {segment['end']}")
 
         # Create the frame dictionary with placeholders for search_keyword and image_path
         frame = {

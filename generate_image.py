@@ -1,6 +1,8 @@
 import os
 import random
+import re
 import glob
+import hashlib
 import shutil
 from PIL import Image
 from pygoogle_image import image as pi
@@ -15,7 +17,8 @@ def get_newly_created_folder(base_folder):
 
 
 # Method to move and rename images to the frame folder
-def move_and_rename_images(source_folder, frame_folder, frame_index):
+def move_and_rename_images(source_folder, frame_folder, frame_index, all_images_folder):
+    """Move images from source folder to the frame folder and also copy them to all_images folder."""
     # Create the frame folder if it doesn't exist
     os.makedirs(frame_folder, exist_ok=True)
 
@@ -33,6 +36,11 @@ def move_and_rename_images(source_folder, frame_folder, frame_index):
             # Move and rename the image to the frame folder
             shutil.move(img_path, new_img_path)
             print(f"Image moved and renamed: {new_img_path}")
+
+            # Copy the image to the all_images folder
+            if is_9_16_ratio(new_img_path):
+                shutil.copy(new_img_path, all_images_folder)
+                print(f"Image copied to all_images folder: {new_img_path}")
         except Exception as e:
             print(f"Error moving and renaming {img_path}: {e}")
 
@@ -119,22 +127,45 @@ def convert_to_9_16(image_path, save_folder):
 
     return portrait_img_path
 
+def sanitize_directory_name(name):
+    # Replace invalid characters with underscores
+    return re.sub(r'[<>:"/\\|?*]', '_', name)
 
 # Process images for frames and convert selected images to 9:16 ratio
+def compute_image_hash(image_path):
+    """Compute the SHA-256 hash of an image."""
+    with Image.open(image_path) as img:
+        img = img.convert('RGB')  # Ensure the image is in RGB mode
+        img_bytes = img.tobytes()
+        return hashlib.sha256(img_bytes).hexdigest()
+
+def is_9_16_ratio(image_path):
+    """Check if the image has a 9:16 aspect ratio."""
+    with Image.open(image_path) as image:
+        width, height = image.size
+        ratio = height / width
+        is_portrait = ratio >= 1.3
+        return is_portrait
+
 def process_images_for_frames(updated_frames):
     base_folder = "images"
     selected_folder = "frames"
     selected_images_folder = "selected_images"
-    #portrait_images_folder = "portrait_images"  # Folder for 9:16 converted images
+    all_images_folder = "all_images"
 
     os.makedirs(selected_images_folder, exist_ok=True)
-    #os.makedirs(portrait_images_folder, exist_ok=True)
+    os.makedirs(all_images_folder, exist_ok=True)
+
+    selected_image_hashes = set()  # Track selected image hashes
 
     for frame in updated_frames:
         search_keyword = frame['search_keyword']
 
-        # Download images (this is your own logic)
-        downloaded_images = pi.download(keywords=frame['search_keyword'], limit=5)
+        # Sanitize the search keyword for downloading
+        sanitized_keyword = sanitize_directory_name(search_keyword)
+
+        # Download images (your logic here)
+        downloaded_images = pi.download(keywords=sanitized_keyword, limit=5)
 
         # Get the newly created folder
         new_folder = get_newly_created_folder(base_folder)
@@ -144,27 +175,55 @@ def process_images_for_frames(updated_frames):
 
         print(f"New folder found: {new_folder}")
 
-        # Move and rename images
+        # Move and rename images to frame folder and all images folder
         frame_folder = os.path.join(selected_folder, f"frame_{updated_frames.index(frame) + 1}_images")
-        move_and_rename_images(new_folder, frame_folder, updated_frames.index(frame) + 1)
+        move_and_rename_images(new_folder, frame_folder, updated_frames.index(frame) + 1, all_images_folder)
 
         # Delete the original folder after moving images
         shutil.rmtree(new_folder)
-        #print(f"Deleted folder: {new_folder}")
 
         # Select the best fit image (portrait or random) and copy it to the selected folder
         selected_image_path = select_best_fit_image(frame_folder)
-        # test = Image.open(selected_image_path)
+
         if selected_image_path:
+            img_hash = compute_image_hash(selected_image_path)
+            print(f"selected image - path: {selected_image_path}, img_hash: {img_hash}")
+            # Check if the selected image has already been chosen based on its hash
+            if img_hash in selected_image_hashes:
+                print("DUPLICATE IMAGE FOUND.....")
+                # Select a random image from the all_images folder
+                all_images = [os.path.join(all_images_folder, img) for img in os.listdir(all_images_folder)]
+                # Filter only for 9:16 ratio images
+                all_images = [img for img in all_images if is_9_16_ratio(img)]
+
+                # Remove already selected images from the selection pool based on hash
+                all_images = [img for img in all_images if compute_image_hash(img) not in selected_image_hashes]
+
+                if all_images:
+                    selected_image_path = random.choice(all_images)  # Pick a random image
+                    img_hash = compute_image_hash(selected_image_path)  # Recompute hash for the new selection
+                    print(f"++++++++++++++++++ RANDOM IMAGE PICKED --- Img Path - {selected_image_path} ++++++++++++++++++")
+
+            selected_image_hashes.add(img_hash)  # Add to selected hashes
+
             img_name = os.path.basename(selected_image_path)
             final_image_path = os.path.join(selected_images_folder, img_name)
             shutil.copy(selected_image_path, final_image_path)
             print(f"Selected image copied to final folder: {final_image_path}")
 
+            # Remove the selected image from the all_images folder
+            image_to_remove_path = os.path.join(all_images_folder, img_name)
+            if os.path.exists(image_to_remove_path):
+                os.remove(image_to_remove_path)
+                print(f"Removed selected image from all_images folder: {img_name}")
+            else:
+                print(f"Image not found in all_images folder for removal: {image_to_remove_path}")
+
             # Update frame with the path of the selected image
             frame['image_path'] = final_image_path
         else:
             print(f"No suitable image found for frame: {frame['search_keyword']}")
+
         # if selected_image_path:
         #     # Convert the selected image to a 9:16 aspect ratio
         #     portrait_image_path = convert_to_9_16(selected_image_path, portrait_images_folder)
@@ -179,6 +238,7 @@ def process_images_for_frames(updated_frames):
         #     frame['image_path'] = final_image_path
         # else:
         #     print(f"No suitable image found for frame: {frame['search_keyword']}")
+    shutil.rmtree(all_images_folder)
 
 
 # Main function to call the processing method
