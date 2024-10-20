@@ -139,8 +139,9 @@ def generate_search_keywords(formatted_frames, main_content_sentence):
                 f"this is main_content = {combined_keyword}\n\n"
                 f"Generate relevant search keywords for the actual keyword.\n"
                 f"the search keyword must have objects or living things or something sentence that is meaningful to generate images.\n"
-                f"also the search keyword should contain 'hd portrait images' like keyword to generate the images. the search keyword should more likely a google search.\n"
-                f"note: Also avoid giving explanation and stuff just give the search_keyword, just give like this 'search_keyword: your answer here'\n"
+                # f"also the search keyword should contain 'hd portrait images' like keyword to generate the images. the search keyword should more likely a google search.\n"
+                f"the search keyword should more likely a google search to find hd images.\n"
+                f"note: Also avoid giving explanation and stuff just give the search_keyword and also make sure the sentence should contain maximum of 60 letters, just give like this 'search_keyword: your answer here'\n"
             )
 
             # Start a new chat session with the combined prompt

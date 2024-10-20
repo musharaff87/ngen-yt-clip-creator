@@ -4,11 +4,14 @@ import re
 import glob
 import hashlib
 import shutil
+import time
+
 from PIL import Image
 from pygoogle_image import image as pi
 import pytesseract
 import cv2
 import numpy as np
+import threading
 
 
 def get_newly_created_folder(base_folder):
@@ -18,6 +21,54 @@ def get_newly_created_folder(base_folder):
         return None
     latest_folder = max(subfolders, key=os.path.getctime)
     return latest_folder
+
+
+def download_images(frame):
+    search_keyword = frame['search_keyword']
+    words = search_keyword.split()
+    max_attempts = len(words) // 2 + (1 if len(words) % 2 != 0 else 0)
+    attempt_counter = 1
+
+    for attempt in range(max_attempts):
+        sanitized_keyword = sanitize_directory_name(' '.join(words))
+
+        print(f"Attempting to download with keyword ({attempt_counter}): '{sanitized_keyword}'")
+        if attempt_counter != 1:
+            time.sleep(10)
+        attempt_counter = attempt_counter + 1
+
+        downloaded_images = []
+
+        def download_function():
+            nonlocal downloaded_images
+            print("Downloading Image...")
+            downloaded_images = pi.download(keywords=sanitized_keyword, limit=10)
+
+        # Create a thread to run the download function
+        download_thread = threading.Thread(target=download_function)
+        download_thread.start()
+
+        # Wait for the download to complete, but only for 5 seconds
+        download_thread.join(timeout=20)
+
+        if download_thread.is_alive():
+            print("Download timed out. Proceeding to next step...")
+            # Optionally, you can also check if you got any images
+            if not downloaded_images:
+                print("No images downloaded, retrying with reduced keyword...")
+        else:
+            # If the download completes successfully within 5 seconds
+            if downloaded_images:
+                print("Download Successful")
+                return downloaded_images
+
+        # Reduce the number of words in the keyword by 3 for the next attempt
+        words = words[:-2]
+        if not words:
+            print("No more words to try. Exiting...")
+            break
+
+    return None
 
 
 # Method to move and rename images to the frame folder
@@ -95,6 +146,7 @@ def contains_text(img_path):
 
 def select_best_fit_image(frame_folder, all_images_folder):
     image_files = glob.glob(os.path.join(frame_folder, '*'))
+    valid_images = []
     best_image = None
     best_resolution = 0
     quality_images = []
@@ -112,6 +164,8 @@ def select_best_fit_image(frame_folder, all_images_folder):
                 if os.path.exists(all_image_path):
                     remove_image(all_image_path)
                 continue
+
+            valid_images.append(img_path)
 
             is_portrait, resolution = evaluate_image_quality(img)
 
@@ -139,8 +193,8 @@ def select_best_fit_image(frame_folder, all_images_folder):
         return selected_image
 
     # If no images meet criteria, select a random image
-    if image_files:
-        selected_image = random.choice(image_files)
+    if valid_images:
+        selected_image = random.choice(valid_images)
         print(f"No portrait-like image found, selecting random image: {selected_image}")
         return selected_image
 
@@ -223,7 +277,8 @@ def process_images_for_frames(updated_frames):
 
         # Download images (your logic here)
         print(f"Downloading Image...{sanitized_keyword}")
-        downloaded_images = pi.download(keywords=sanitized_keyword, limit=10)
+        download_images(frame)
+        #downloaded_images = pi.download(keywords=sanitized_keyword, limit=10)
         print("Download Successful")
 
         # Get the newly created folder

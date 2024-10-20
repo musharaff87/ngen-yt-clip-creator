@@ -1,3 +1,5 @@
+import os
+import shutil
 from text_to_speech import generate_audio_pyttsx3
 from text_to_speech import generate_audio_gtts
 from text_to_speech import change_pitch
@@ -7,9 +9,29 @@ from gemini_api import generate_search_keywords
 from generate_image import update_images_path_in_frame
 from generate_video_with_images import create_video_from_images_with_audio
 
+
+def delete_existing_folders():
+    base_folder = "images"
+    selected_folder = "frames"
+    selected_images_folder = "selected_images"
+    all_images_folder = "all_images"
+    folders = [base_folder, selected_folder, selected_images_folder, all_images_folder]
+
+    # Loop through the folder list and delete if they exist
+    for folder in folders:
+        if os.path.exists(folder) and os.path.isdir(folder):
+            try:
+                shutil.rmtree(folder)  # Delete the folder and all its contents
+                print(f"Deleted folder: {folder}")
+            except Exception as e:
+                print(f"Error deleting folder {folder}: {e}")
+        else:
+            print(f"Folder not found or already deleted: {folder}")
+
 if __name__ == "__main__":
+    delete_existing_folders()
     # Example sentences
-    sentence = "about Marvel Spiderman"
+    sentence = "Iran vs israel war news"
     sample_content_1 = """ Did you know that parrots are some of the most intelligent birds on the planet? Seriously, they're like the Einstein's of the bird world! But let's talk about them in a little more detail.
 
 Parrots are a diverse group of birds, with over 350 species found all over the world. They're known for their bright colors, their ability to mimic sounds (including human speech!), and their complex social structures.  These guys are super social, living in flocks and communicating with each other using a variety of calls and whistles. It's like their own little bird language!
@@ -24,7 +46,7 @@ So next time you see a parrot, remember that these amazing creatures are more th
     #brief_content = sample_content_1
 
     # Convert the content to single audio frames
-    main_audio_path = generate_audio_gtts(brief_content, "spider_us.mp3")
+    main_audio_path = generate_audio_gtts(brief_content, "iran_war.mp3")
     print(f"Audio file created at: {main_audio_path}")
 
     # For Changing the Audio Pitch
@@ -38,7 +60,7 @@ So next time you see a parrot, remember that these amazing creatures are more th
     print(f"printing it outside {updated_frames}")
     update_images_in_frames = update_images_path_in_frame(updated_frames)
     print(update_images_in_frames)
-    output_video_file = 'video_outputs/output_video_2.mp4'
+    output_video_file = 'video_outputs/iran_war.mp4'
 
     # Create the video from images and audio
     create_video_from_images_with_audio(update_images_in_frames, main_audio_path, output_video_file)
