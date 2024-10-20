@@ -6,6 +6,10 @@ import hashlib
 import shutil
 from PIL import Image
 from pygoogle_image import image as pi
+import pytesseract
+import cv2
+import numpy as np
+
 
 def get_newly_created_folder(base_folder):
     # Find all subfolders in the base folder sorted by creation time
@@ -35,12 +39,12 @@ def move_and_rename_images(source_folder, frame_folder, frame_index, all_images_
 
             # Move and rename the image to the frame folder
             shutil.move(img_path, new_img_path)
-            print(f"Image moved and renamed: {new_img_path}")
+            #print(f"Image moved and renamed: {new_img_path}")
 
             # Copy the image to the all_images folder
             if is_9_16_ratio(new_img_path):
                 shutil.copy(new_img_path, all_images_folder)
-                print(f"Image copied to all_images folder: {new_img_path}")
+                #print(f"Image copied to all_images folder: {new_img_path}")
         except Exception as e:
             print(f"Error moving and renaming {img_path}: {e}")
 
@@ -56,16 +60,59 @@ def evaluate_image_quality(image):
     is_portrait = ratio >= 1.3
     return is_portrait, resolution
 
+def is_mobile_portrait_ratio(img):
+    width, height = img.size
+    aspect_ratio = width / height
+    return 0.5 < aspect_ratio < 0.75
 
-# Method to select the best portrait image based on quality and aspect ratio
-def select_best_fit_image(frame_folder):
+def remove_image(img_path):
+    try:
+        os.remove(img_path)
+        print(f"Removed image: {img_path}")
+    except Exception as e:
+        print(f"Error removing image {img_path}: {e}")
+
+def contains_text(img_path):
+    unwanted_words = ["alamy", "shutter", "tter", "depositphotos", "snutter", "shut", "drea", "dream", "alam", "www", "stock", "image", "photo" ".com"]
+    # Use OpenCV to preprocess the image for better text detection
+    img_cv = cv2.imread(img_path)
+    gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
+    # Apply thresholding to make the text stand out
+    _, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY_INV)
+
+    # Use Tesseract OCR to detect text
+    custom_config = r'--oem 3 --psm 6'
+    text = pytesseract.image_to_string(thresh, config=custom_config)
+    print(text.strip().lower())
+    if len(text.strip()) > 1:
+        for word in unwanted_words:
+            if word in text.strip().lower():
+                print(f"Unwanted word '{word}' found in the image.")
+                return True
+
+
+    return False
+
+def select_best_fit_image(frame_folder, all_images_folder):
     image_files = glob.glob(os.path.join(frame_folder, '*'))
     best_image = None
     best_resolution = 0
+    quality_images = []
 
     for img_path in image_files:
         try:
             img = Image.open(img_path)
+
+            # Skip images with text or watermarks
+            if contains_text(img_path):
+                print(f"Skipping image with text/watermark: {img_path}")
+                img.close()
+                remove_image(img_path)  # Remove from frames folder
+                all_image_path = os.path.join(all_images_folder, os.path.basename(img_path))
+                if os.path.exists(all_image_path):
+                    remove_image(all_image_path)
+                continue
+
             is_portrait, resolution = evaluate_image_quality(img)
 
             # If portrait and higher quality, update best image
@@ -74,6 +121,10 @@ def select_best_fit_image(frame_folder):
                 best_resolution = resolution
                 print(f"Best image updated: {img_path} with resolution {resolution}")
 
+            if is_mobile_portrait_ratio(img):
+                quality_images.append((img_path, resolution))
+                print(f"Image added to quality candidates: {img_path} with resolution {resolution}")
+
         except Exception as e:
             print(f"Error opening image {img_path}: {e}")
 
@@ -81,7 +132,13 @@ def select_best_fit_image(frame_folder):
         print(f"Best portrait image found: {best_image}")
         return best_image
 
-    # If no portrait-like image is found, select a random image
+    # If no portrait-like image is found, select the best quality random image near mobile portrait ratio
+    if quality_images:
+        selected_image = max(quality_images, key=lambda x: x[1])[0]  # Select the image with the highest resolution
+        print(f"No portrait-like image found, selecting best quality image: {selected_image}")
+        return selected_image
+
+    # If no images meet criteria, select a random image
     if image_files:
         selected_image = random.choice(image_files)
         print(f"No portrait-like image found, selecting random image: {selected_image}")
@@ -159,13 +216,15 @@ def process_images_for_frames(updated_frames):
     selected_image_hashes = set()  # Track selected image hashes
 
     for frame in updated_frames:
-        search_keyword = frame['search_keyword']
+        search_keyword = frame['search_keyword'] #+ "9:16 ratio"
 
         # Sanitize the search keyword for downloading
         sanitized_keyword = sanitize_directory_name(search_keyword)
 
         # Download images (your logic here)
-        downloaded_images = pi.download(keywords=sanitized_keyword, limit=5)
+        print(f"Downloading Image...{sanitized_keyword}")
+        downloaded_images = pi.download(keywords=sanitized_keyword, limit=10)
+        print("Download Successful")
 
         # Get the newly created folder
         new_folder = get_newly_created_folder(base_folder)
@@ -183,7 +242,7 @@ def process_images_for_frames(updated_frames):
         shutil.rmtree(new_folder)
 
         # Select the best fit image (portrait or random) and copy it to the selected folder
-        selected_image_path = select_best_fit_image(frame_folder)
+        selected_image_path = select_best_fit_image(frame_folder, all_images_folder)
 
         if selected_image_path:
             img_hash = compute_image_hash(selected_image_path)
@@ -217,7 +276,7 @@ def process_images_for_frames(updated_frames):
                 os.remove(image_to_remove_path)
                 print(f"Removed selected image from all_images folder: {img_name}")
             else:
-                print(f"Image not found in all_images folder for removal: {image_to_remove_path}")
+                print(f"Image not found in all_images folder for removal: {img_name}")
 
             # Update frame with the path of the selected image
             frame['image_path'] = final_image_path
@@ -254,15 +313,146 @@ def update_images_path_in_frame(updated_frames):
 # Example usage
 if __name__ == "__main__":
     # Define your updated_frames here as a list of dictionaries
-    updated_frames = [{'audio_duration': '0.0s - 5.04s',
-                       'actual_keyword': 'Did you know that parrots are some of the most intelligent birds on the planet?',
-                       'search_keyword': 'hd portrait images of colorful parrots', 'image_path': ''},
-                      {'audio_duration': '5.04s - 9.12s',
-                       'actual_keyword': "Seriously, they're like the Einstein's of the bird world.",
-                       'search_keyword': 'hd portrait images of peacocks with colorful feathers', 'image_path': ''},
-                      {'audio_duration': '100.8s - 106.8s',
-                       'actual_keyword': "pretty faces. They're intelligent, social, and vital members of the natural world.",
-                       'search_keyword': 'hd portrait images of peacocks', 'image_path': ''}]
+    updated_frames = [
+        {
+            'audio_duration': '0.0s - 5.04s',
+            'actual_keyword': 'Did you know that parrots are some of the most intelligent birds on the planet?',
+            'search_keyword': 'hd portrait images of parrots',
+            'image_path': 'selected_images\\sample_image_5_1.jpeg'
+        },
+        {
+            'audio_duration': '5.04s - 9.12s',
+            'actual_keyword': "Seriously, they're like the Einstein's of the bird world.",
+            'search_keyword': 'hd portrait images of intelligent birds',
+            'image_path': 'selected_images\\sample_image_2_2.jpeg'
+        },
+        {
+            'audio_duration': '9.12s - 12.24s',
+            'actual_keyword': "But let's talk about them in a little more detail.",
+            'search_keyword': 'hd portrait images of people talking in detail',
+            'image_path': 'selected_images\\sample_image_5_3.png'
+        },
+        {
+            'audio_duration': '12.24s - 15.04s',
+            'actual_keyword': 'Parrots are a diverse group of birds.',
+            'search_keyword': 'hd portrait images of colorful parrots',
+            'image_path': 'selected_images\\sample_image_1_4.png'
+        },
+        {
+            'audio_duration': '15.04s - 21.44s',
+            'actual_keyword': "With over 350 species found all over the world, they're known for their bright colors,",
+            'search_keyword': 'hd portrait images of colorful birds from around the world',
+            'image_path': 'selected_images\\sample_image_3_5.png'
+        },
+        {
+            'audio_duration': '21.44s - 25.92s',
+            'actual_keyword': 'their ability to mimic sounds, including human speech,',
+            'search_keyword': 'hd portrait images of parrots mimicking human speech',
+            'image_path': 'selected_images\\sample_image_5_6.jpeg'
+        },
+        {
+            'audio_duration': '25.92s - 28.8s',
+            'actual_keyword': 'and their complex social structures.',
+            'search_keyword': 'hd portrait images of people in complex social structures',
+            'image_path': 'selected_images\\sample_image_4_7.jpeg'
+        },
+        {
+            'audio_duration': '28.8s - 33.84s',
+            'actual_keyword': 'These guys are super social, living in flocks and communicating with each other',
+            'search_keyword': 'hd portrait images of birds in a flock communicating',
+            'image_path': 'selected_images\\sample_image_5_8.jpeg'
+        },
+        {
+            'audio_duration': '33.84s - 36.16s',
+            'actual_keyword': 'using a variety of calls and whistles.',
+            'search_keyword': 'hd portrait images of birds singing and whistling',
+            'image_path': 'selected_images\\sample_image_3_9.jpeg'
+        },
+        {
+            'audio_duration': '37.04s - 39.84s',
+            'actual_keyword': "It's like their own little bird language.",
+            'search_keyword': 'hd portrait images of birds communicating',
+            'image_path': 'selected_images\\sample_image_3_10.jpeg'
+        },
+        {
+            'audio_duration': '39.84s - 44.8s',
+            'actual_keyword': 'Their beaks are powerful tools, helping them crack open nuts and seeds,',
+            'search_keyword': 'hd portrait images of birds with powerful beaks cracking open nuts and seeds',
+            'image_path': 'selected_images\\sample_image_4_11.jpeg'
+        },
+        {
+            'audio_duration': '45.44s - 49.2s',
+            'actual_keyword': 'non-living objects, and even shred their food.',
+            'search_keyword': 'hd portrait images of animals shredding their food',
+            'image_path': 'selected_images\\sample_image_4_12.jpeg'
+        },
+        {
+            'audio_duration': '49.2s - 56.64s',
+            'actual_keyword': 'Some species, like the Amazon parrots, are known for their incredible ability to mimic sounds.',
+            'search_keyword': 'Amazon parrot hd portrait images',
+            'image_path': 'selected_images\\sample_image_4_13.jpeg'
+        },
+        {
+            'audio_duration': '56.72s - 61.6s',
+            'actual_keyword': 'They can learn words, phrases, and even entire songs.',
+            'search_keyword': 'hd portrait images of people learning words and phrases',
+            'image_path': 'selected_images\\sample_image_5_14.jpeg'
+        },
+        {
+            'audio_duration': '61.6s - 66.24s',
+            'actual_keyword': 'This is because they have a special structure in their vocal cords called a serenx,',
+            'search_keyword': 'hd portrait images of animals with unique vocal cords',
+            'image_path': 'selected_images\\sample_image_1_15.jpeg'
+        },
+        {
+            'audio_duration': '67.2s - 70.24s',
+            'actual_keyword': 'which allows them to produce a wide range of sounds.',
+            'search_keyword': 'hd portrait images of a musician playing a variety of instruments',
+            'image_path': 'selected_images\\sample_image_1_16.jpeg'
+        },
+        {
+            'audio_duration': '70.88s - 74.08s',
+            'actual_keyword': 'Parrots have evolved to live in a variety of habitats.',
+            'search_keyword': 'hd portrait images of parrots in different habitats',
+            'image_path': 'selected_images\\sample_image_2_17.jpeg'
+        },
+        {
+            'audio_duration': '74.72s - 80.64s',
+            'actual_keyword': 'From lush rainforests to dry grasslands, they often build their nests and tree cavities,',
+            'search_keyword': 'hd portrait images of birds building nests in tree cavities in lush rainforests',
+            'image_path': 'selected_images\\sample_image_2_18.jpeg'
+        },
+        {
+            'audio_duration': '81.28s - 87.84s',
+            'actual_keyword': 'non-living objects, using sticks, leaves, and even feathers for bedding.',
+            'search_keyword': 'hd portrait images of bird nests made of sticks, leaves, and feathers',
+            'image_path': 'selected_images\\sample_image_4_19.jpeg'
+        },
+        {
+            'audio_duration': '87.84s - 90.48s',
+            'actual_keyword': 'They play a vital role in their ecosystems,',
+            'search_keyword': 'hd portrait images of animals in their natural ecosystems',
+            'image_path': 'selected_images\\sample_image_3_20.png'
+        },
+        {
+            'audio_duration': '91.12s - 94.88s',
+            'actual_keyword': 'helping to disperse seeds and control insect populations.',
+            'search_keyword': 'hd portrait images of birds and insects in a forest',
+            'image_path': 'selected_images\\sample_image_1_21.jpeg'
+        },
+        {
+            'audio_duration': '95.52s - 100.8s',
+            'actual_keyword': 'So next time you see a parrot, remember that these amazing creatures are more than just',
+            'search_keyword': 'hd portrait images of parrots in tropical rainforest',
+            'image_path': 'selected_images\\sample_image_3_22.jpeg'
+        },
+        {
+            'audio_duration': '100.8s - 106.8s',
+            'actual_keyword': "pretty faces. They're intelligent, social, and vital members of the natural world.",
+            'search_keyword': 'hd portrait images of intelligent animals',
+            'image_path': 'selected_images\\sample_image_2_23.jpeg'
+        }
+    ]
 
     new_updated_frames = update_images_path_in_frame(updated_frames)
     print(new_updated_frames)

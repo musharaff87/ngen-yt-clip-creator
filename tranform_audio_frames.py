@@ -21,8 +21,8 @@ def transcribe_audio_and_format(audio_file):
         frame = {
             "audio_duration": f"{start_time}s - {end_time}s",
             "actual_keyword": segment['text'].strip(),
-            "search_keyword": "",  # Leave empty for now
-            "image_path": ""  # Leave empty for now
+            "search_keyword": "",
+            "image_path": ""
         }
 
         # Add the frame to the list of frames
