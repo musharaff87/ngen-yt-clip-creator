@@ -1,5 +1,4 @@
 import time
-
 import google.generativeai as genai
 import json
 import re
@@ -29,6 +28,71 @@ model = genai.GenerativeModel(
     model_name="gemini-1.5-flash",
     generation_config=generation_config,
 )
+
+
+def generate_video_metadata(sentence):
+    # Construct prompt to get a catchy title, description, trending tags, and publish time suggestion
+    prompt = f"""
+    Generate YouTube video metadata based on this content: {sentence}.\n
+    1. Start with a catchy, click-worthy title with important words in capital letters.\n
+    2. Write a conversational description for viewers, beginning with a hook phrase like "Did you know?" or "You won't believe this!"\n
+    3. Generate 10-15 trending tags related to the topic, focusing on relevant and popular terms.\n
+    4. Provide the appropriate YouTube Data API category ID based on the content. For example, if about sports, choose "Sports" (category_id=17).\n
+
+    Please follow this format strictly:\n
+    Title: [Catchy Title]\n
+    Description: [Conversational Description starting with a hook]\n
+    Tags: [Tag1, Tag2, Tag3, ..., TagN]\n
+    Category ID: [Numeric Category ID]\n
+
+    Ensure each item is labeled clearly as shown and provide one item per line.\n
+    """
+
+    # Start the chat session
+    chat_session = model.start_chat(
+        history=[
+            {
+                "role": "user",
+                "parts": [prompt],
+            },
+        ]
+    )
+
+    # Send message and get response
+    response = call_gemini_with_retry(prompt)
+
+    # Check how to access the actual text from response
+    response_text = response.text if hasattr(response, 'text') else str(response)
+
+    # Parse the response into variables
+    lines = response_text.strip().split("\n")
+
+    title = ""
+    description = ""
+    tags = []
+    category_id = 22  # Default category ID
+
+    for line in lines:
+        if line.startswith("Title:"):
+            title = line.replace("Title:", "").strip()
+        elif line.startswith("Description:"):
+            description = line.replace("Description:", "").strip()
+        elif line.startswith("Tags:"):
+            tags = line.replace("Tags:", "").strip().split(", ")
+        elif line.startswith("Category ID:"):
+            try:
+                category_id_str = line.replace("Category ID:", "").strip()
+                category_id = int(category_id_str)
+            except ValueError:
+                category_id = 22  # Default in case of conversion error
+    print(f"Title: {title}")
+    print(f"Description: {description}")
+    print(f"Tags: {tags}")
+    print(f"Category ID: {category_id}")
+
+    return title, description, tags, category_id
+
+
 
 
 def get_brief_content(sentence):
@@ -179,6 +243,13 @@ def generate_search_keywords(formatted_frames, main_content_sentence):
 
     print("Search Keywords Generated Successfully")
     return updated_frames
+
+def generate_sentence_for_category(category):
+    prompt = f"Generate a sentence for a YouTube video in the '{category}' category. It should be a story, fact, or incident related to the category and formatted to engage viewers, under 6 to 10 words."
+    response = call_gemini_with_retry(prompt)
+    sentence = response.text.strip()
+    print(f"Generated Sentence: {sentence}")
+    return sentence
 
 
 def call_gemini_with_retry(prompt, max_retries=10, initial_sleep=2, max_sleep=30):

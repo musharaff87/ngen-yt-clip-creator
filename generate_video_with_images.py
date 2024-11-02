@@ -103,7 +103,7 @@ def add_background_music(video, music_folder, main_audio):
     if music_files:
         random_music_path = os.path.join(music_folder, random.choice(music_files))
         print(f"Adding background music: {random_music_path}")
-        background_music = AudioFileClip(random_music_path).volumex(0.1)  # Lower volume for background music
+        background_music = AudioFileClip(random_music_path).volumex(0.2)  # Lower volume for background music
 
         # Calculate the number of loops needed to cover the video duration
         #loops_needed = int(video.duration // background_music.duration) + 1
@@ -147,8 +147,8 @@ def create_video_from_images_with_audio(image_data, audio_file, output_video_fil
 
         # Add filters, transitions, and animation to the clip
         #img_clip = apply_filters_to_image_clip(img_clip)
-        if i%3 == 0:
-            img_clip = apply_transitions(img_clip, duration)
+        #if i%3 == 0:
+            #img_clip = apply_transitions(img_clip, duration)
 
         img_clip = apply_animation(img_clip)
 

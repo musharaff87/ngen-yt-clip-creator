@@ -2,8 +2,62 @@
 from gtts import gTTS
 import pyttsx3
 from pydub import AudioSegment
+import requests
+from elevenlabs import ElevenLabs
+import json
 import os
 
+
+def load_api_keys(filename='eleven_labs_api_keys.json'):
+    with open(filename, 'r') as f:
+        data = json.load(f)
+    return data['api_keys']
+
+
+def generate_audio_elevenlabs(text, file_name):
+    print("Loading API keys...")
+    api_keys = load_api_keys()
+
+    for api_key in api_keys:
+        print(f"Checking remaining character credits for API key: {api_key[:5]}***")
+        headers = {
+            "xi-api-key": api_key
+        }
+
+        # Send a GET request to the user endpoint to check credits
+        response = requests.get("https://api.elevenlabs.io/v1/user", headers=headers)
+
+        if response.status_code == 200:
+            user_data = response.json()
+            character_limit = user_data['subscription']['character_limit']
+            character_count = user_data['subscription']['character_count']
+            remaining_characters = character_limit - character_count
+            print(f"Remaining characters for synthesis: {remaining_characters}")
+
+            # Check if enough credits are available
+            if remaining_characters > len(text) // 2 - 10:
+                print("Converting Text to Speech With Eleven Labs API...")
+                client = ElevenLabs(api_key=api_key)
+
+                audio_generator = client.generate(
+                    text=text,
+                    voice="Brian",
+                    model="eleven_turbo_v2"  # Specify the desired model
+                )
+
+                output_path = f"sample_audio/{file_name}"
+                with open(output_path, "wb") as f:
+                    for chunk in audio_generator:
+                        f.write(chunk)
+
+                print("Conversion Completed Successfully")
+                return output_path
+        else:
+            print(
+                f"Failed to retrieve user data for API key {api_key[:5]}***: {response.status_code} - {response.text}")
+
+    print("All API keys are exhausted, falling back to gTTS...")
+    return generate_audio_gtts(text, file_name)
 
 def generate_audio_gtts(text, file_name):
     print("Converting Text to Speech With GTTS...")
