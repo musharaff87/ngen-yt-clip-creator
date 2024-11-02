@@ -23,8 +23,8 @@ def get_newly_created_folder(base_folder):
     return latest_folder
 
 
-def download_images(frame):
-    search_keyword = frame['search_keyword']
+def download_images(search_frame):
+    search_keyword = search_frame['search_keyword']
     words = search_keyword.split()
     max_attempts = len(words) // 2 + (1 if len(words) % 2 != 0 else 0)
     attempt_counter = 1
@@ -43,13 +43,14 @@ def download_images(frame):
             nonlocal downloaded_images
             print("Downloading Image...")
             downloaded_images = pi.download(keywords=sanitized_keyword, limit=10)
+            True
 
         # Create a thread to run the download function
         download_thread = threading.Thread(target=download_function)
         download_thread.start()
 
         # Wait for the download to complete, but only for 5 seconds
-        download_thread.join(timeout=20)
+        download_thread.join(timeout=200)
 
         if download_thread.is_alive():
             print("Download timed out. Proceeding to next step...")
@@ -57,10 +58,8 @@ def download_images(frame):
             if not downloaded_images:
                 print("No images downloaded, retrying with reduced keyword...")
         else:
-            # If the download completes successfully within 5 seconds
-            if downloaded_images:
-                print("Download Successful")
-                return downloaded_images
+            print("Download Successful")
+            return downloaded_images
 
         # Reduce the number of words in the keyword by 3 for the next attempt
         words = words[:-2]
@@ -124,7 +123,7 @@ def remove_image(img_path):
         print(f"Error removing image {img_path}: {e}")
 
 def contains_text(img_path):
-    unwanted_words = ["alamy", "shutter", "tter", "depositphotos", "snutter", "shut", "drea", "dream", "alam", "www", "stock", "image", "photo" ".com"]
+    unwanted_words = ["alamy", "shutter","getty", "imag", "tter", "depositphotos", "snutter", "shut", "drea", "dream", "alam", "www", "stock", "image", "photo" ".com"]
     # Use OpenCV to preprocess the image for better text detection
     img_cv = cv2.imread(img_path)
     gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
@@ -134,7 +133,7 @@ def contains_text(img_path):
     # Use Tesseract OCR to detect text
     custom_config = r'--oem 3 --psm 6'
     text = pytesseract.image_to_string(thresh, config=custom_config)
-    print(text.strip().lower())
+    #print(text.strip().lower())
     if len(text.strip()) > 1:
         for word in unwanted_words:
             if word in text.strip().lower():
@@ -277,7 +276,8 @@ def process_images_for_frames(updated_frames):
 
         # Download images (your logic here)
         print(f"Downloading Image...{sanitized_keyword}")
-        download_images(frame)
+        sample_frame = frame
+        download_images(sample_frame)
         #downloaded_images = pi.download(keywords=sanitized_keyword, limit=10)
         print("Download Successful")
 
