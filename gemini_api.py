@@ -1,5 +1,6 @@
 import time
 import google.generativeai as genai
+from similarity_searching import generate_unique_sentence_for_category
 import json
 import re
 import random
@@ -33,7 +34,7 @@ model = genai.GenerativeModel(
 def generate_video_metadata(sentence):
     # Construct prompt to get a catchy title, description, trending tags, and publish time suggestion
     prompt = f"""
-    Generate YouTube video metadata based on this content: {sentence}.\n
+    Generate YouTube video metadata based on this true news content: "{sentence}".\n
     1. Start with a catchy, click-worthy title with important words in capital letters.\n
     2. Write a conversational description for viewers, beginning with a hook phrase like "Did you know?" or "You won't believe this!"\n
     3. Generate 10-15 trending tags related to the topic, focusing on relevant and popular terms.\n
@@ -98,7 +99,7 @@ def generate_video_metadata(sentence):
 def get_brief_content(sentence):
     print("Generating Content from Gemini...")
     # Create a prompt that includes the user's input
-    prompt = f"provide a brief, up-to-date description about: {sentence}\n. Include living and non-living objects where relevant. Make it sound like a YouTuber explaining to viewers in a conversational tone\n. Also use attracting sentence in the start of the context like eg: did you know?, you must know this, watch this boost your intelligence, etc.. related to content \n . Also omit sentence like welcome back to channel like that just start talking with viewers\n. Also make sure every sentence in the content must have pull stop with minimum of 10 words\n.   Limit the response to 150 - 200 words."
+    prompt = f"provide a brief, up-to-date description about this recent news: \"{sentence}\"\n. Include living and non-living objects where relevant. Make it sound like a YouTuber explaining to viewers in a conversational tone\n. Also use attracting sentence in the start of the context like eg: did you know?, you must know this, watch this boost your intelligence, etc.. related to content \n . Also omit sentence like welcome back to channel like that just start talking with viewers\n Limit the response to 150 - 200 words."
 
     # Start chat session with initial message
     chat_session = model.start_chat(
@@ -148,7 +149,7 @@ def generate_search_keywords(formatted_frames, main_content_sentence):
             f"the search keyword must have objects or living things or something sentence that is meaningful to generate images.\n"
             f"Also if any name or person present in actual keyword generate search keyword related to that\n"
             f"also the search keyword should more likely a google search keyword.\n"
-            f"the search keyword should some what related to main content\n"
+            f"the search keyword should some what related to main_content and it should be unique relation to actual keyword\n"
             # f"also if the actual keyword doesn't have any meaning then generate random image generation keyword using main_content.\n"
             f"note: Also avoid giving explanation and stuff just give the search_keyword and also make sure the sentence should contain maximum of 60 letters, just give like this 'search_keyword: your answer here'\n"
         )
@@ -245,11 +246,13 @@ def generate_search_keywords(formatted_frames, main_content_sentence):
     return updated_frames
 
 def generate_sentence_for_category(category):
-    prompt = f"Generate a sentence for a YouTube video in the '{category}' category. It should be a story, fact, or incident related to the category and formatted to engage viewers, under 6 to 10 words."
-    response = call_gemini_with_retry(prompt)
-    sentence = response.text.strip()
-    print(f"Generated Sentence: {sentence}")
-    return sentence
+    return generate_unique_sentence_for_category(category)
+    # prompt = f"Generate a sentence for a YouTube video in the '{category}' category. It should be a story, fact, or incident related to the category and formatted to engage viewers, under 6 to 10 words."
+    # response = call_gemini_with_retry(prompt)
+    # sentence = response.text.strip()
+    # print(f"Generated Sentence: {sentence}")
+    # return sentence
+
 
 
 def call_gemini_with_retry(prompt, max_retries=10, initial_sleep=2, max_sleep=30):

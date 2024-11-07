@@ -44,16 +44,16 @@ def create_video_metadata_table(conn):
     conn.commit()
     cursor.close()
 
-def check_existing_video(time_slot):
+def check_existing_video(publish_time):
     cursor = CONN.cursor()
-    today = datetime.now().date()
     cursor.execute('''
         SELECT * FROM video_metadata 
-        WHERE time_slot = %s AND upload_date = %s
-    ''', (time_slot, today))
+        WHERE publish_time = %s
+    ''', (publish_time,))
     exists = cursor.fetchone() is not None
     cursor.close()
     return exists
+
 
 def list_all_videos():
     cursor = CONN.cursor()
@@ -61,6 +61,14 @@ def list_all_videos():
     rows = cursor.fetchall()
     cursor.close()
     return rows
+
+def list_all_video_sentences():
+    """Retrieve all previously used sentences from video_metadata."""
+    cursor = CONN.cursor()
+    cursor.execute('SELECT sentence FROM video_metadata')
+    rows = cursor.fetchall()
+    cursor.close()
+    return [row[0] for row in rows]
 
 
 def update_record(video_id, column_name, value):
@@ -78,7 +86,7 @@ def update_video_status(video_id, status_message):
     CONN.commit()
     cursor.close()
 
-def insert_video_metadata(status, sentence, title, description, tags, category, time_slot, upload_date):
+def insert_video_metadata(status, sentence, title, description, tags, category, upload_date):
     """Inserts a new video metadata record and returns the generated video ID."""
     print("Inserting video metadata:")
     print(f"Status: {status}")
@@ -87,14 +95,13 @@ def insert_video_metadata(status, sentence, title, description, tags, category, 
     print(f"Description: {description}")
     print(f"Tags: {tags}")  # Ensure this is a string
     print(f"Category: {category}")
-    print(f"Time Slot: {time_slot}")
     print(f"Upload Date: {upload_date}")
     cursor = CONN.cursor()
     cursor.execute('''
-        INSERT INTO video_metadata (status, sentence, title, description, tags, category, time_slot, upload_date)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO video_metadata (status, sentence, title, description, tags, category, upload_date)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
         RETURNING id
-    ''', (status, sentence, title, description, tags, category, time_slot, upload_date))
+    ''', (status, sentence, title, description, tags, category, upload_date))
     video_id = cursor.fetchone()[0]
     CONN.commit()
     cursor.close()
@@ -108,15 +115,14 @@ def update_video_publish_time(video_id, publish_datetime):
     cursor.close()
 
 if __name__ == "__main__":
-    time_slot = "8AM"
-    if check_existing_video(time_slot):
-        print(f"A video has already been uploaded for the {time_slot} time slot today.")
-    else:
-        print(f"No video found for the {time_slot} time slot today.")
-
     # List all videos in the video_metadata table
     videos = list_all_videos()
     for video in videos:
-        print(video)
+        print(f"ID: {video[0]}")
+        print(f"Status: {video[1]}")
+        print(f"Title: {video[3]}")
+        print(f"Description: {video[4]}")
+        print(f"Publish Time: {video[5]}")
+        print("=" * 40)
 
     CONN.close()

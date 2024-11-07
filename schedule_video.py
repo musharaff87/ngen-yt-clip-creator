@@ -38,9 +38,9 @@ def delete_existing_folders():
                 print(f"Error deleting folder {folder}: {e}")
         else:
             print(f"Folder not found or already deleted: {folder}")
-def generate_and_upload_video_for_slot(category, time_slot):
-    if check_existing_video(time_slot):
-        print(f"Video for {time_slot} has already been uploaded today.")
+def generate_and_upload_video_for_slot(category, target_time, time_slot):
+    if check_existing_video(target_time):
+        print(f"Video for {target_time} has already been uploaded.")
         return
 
         # Generate video sentence and metadata
@@ -90,42 +90,111 @@ def generate_and_upload_video_for_slot(category, time_slot):
     update_record(video_id, 'video_file', output_video_file)
 
     # Calculate publish time and update it in the database
-    publish_datetime = datetime.now().replace(hour=int(time_slot[:2]), minute=int(time_slot[3:]), second=0,
-                                              microsecond=0)
-    update_video_publish_time(video_id, publish_datetime)
+    # publish_datetime = target_time
+    # update_video_publish_time(video_id, publish_datetime)
+    #
+    # # Upload video to YouTube
+    # upload_video(
+    #     video_file=output_video_file,
+    #     title=title,
+    #     description=description,
+    #     tags=tags,
+    #     category_id=category_id,
+    #     publish_time=publish_datetime
+    # )
+    #
+    # # Update the final status as "Uploaded Successfully"
+    # update_video_status(video_id, "Uploaded Successfully")
+    #
+    # print(f"Uploaded video for {category} at {time_slot}.")
 
-    # Upload video to YouTube
-    upload_video(
-        video_file=output_video_file,
+
+def schedule_daily_videos(days=1):
+    now = datetime.now()
+
+    # Iterate over each day in the specified range
+    for day in range(days):
+        current_day = datetime.now().date() + timedelta(days=day)
+
+        for category, time_slot in SCHEDULE:
+            # Create a full datetime object for the scheduled time
+            target_time = datetime.combine(current_day, datetime.strptime(time_slot, "%H:%M").time())
+
+            # Check if the target time is in the future
+            if target_time > now:
+                print(f"Uploading video for category '{category}' at scheduled time '{target_time}' immediately.")
+
+                # Check if video already exists for this time slot
+                if check_existing_video(target_time):
+                    print(f"Video for {target_time} has already been uploaded.")
+                    continue
+
+                # Generate and upload video for the slot
+                generate_and_upload_video_for_slot(category, target_time, time_slot)
+            else:
+                print(f"Skipping past time slot '{target_time}' for category '{category}' as it has already passed.")
+
+
+def generate_video_for_sentence(sentence):
+
+    # Generate video sentence and metadata
+    delete_existing_folders()
+    #sentence = generate_sentence_for_category(category)
+    title, description, tags, category_id = generate_video_metadata(sentence)
+    today_date = datetime.now().date()
+
+    # Insert initial record with "Processing" status and get the video_id
+    video_id = insert_video_metadata(
+        status="Processing: Generating audio content",
+        sentence=sentence,
         title=title,
         description=description,
-        tags=tags,
-        category_id=category_id,
-        publish_time=publish_datetime
+        tags=",".join(tags),
+        category="NA",
+        upload_date=today_date
     )
+    sani_file_name = sanitize_directory_name(sentence)
+    if len(sani_file_name) > 40:
+        sani_file_name = sani_file_name[:39]
 
-    # Update the final status as "Uploaded Successfully"
-    update_video_status(video_id, "Uploaded Successfully")
+    # Generate audio
+    output_audio_file = f"{sani_file_name}.mp3"
+    brief_content = get_brief_content(sentence)
+    main_audio_path = generate_audio_elevenlabs(brief_content, output_audio_file)
 
-    print(f"Uploaded video for {category} at {time_slot}.")
+    # Update status to indicate audio creation success
+    update_video_status(video_id, "Processing: Audio generated")
+
+    # Transcribe audio and generate frames
+    formatted_frames = transcribe_audio_and_format(main_audio_path)
+    update_video_status(video_id, "Processing: Audio transcribed")
+    update_record(video_id, 'audio_file', main_audio_path)
 
 
-def schedule_daily_videos():
-    now = datetime.now().time()
+    # Generate search keywords and update frames
+    updated_frames = generate_search_keywords(formatted_frames, sentence)
+    update_video_status(video_id, "Processing: Keywords generated")
 
-    for category, time_slot in SCHEDULE:
-        # Parse time_slot using the correct format
-        target_time = datetime.strptime(time_slot, "%H:%M").time()
+    # Generate images for frames
+    update_images_in_frames = update_images_path_in_frame(updated_frames)
+    update_video_status(video_id, "Processing: Images generated")
 
-        # Check if the target time is in the future
-        if target_time > now:
-            print(f"Uploading video for category '{category}' at scheduled time slot '{time_slot}' immediately.")
-
-            # Generate and upload video for the slot
-            generate_and_upload_video_for_slot(category, time_slot)
-        else:
-            print(f"Skipping past time slot '{time_slot}' for category '{category}' as it has already passed.")
+    # Create video from images and audio
+    output_video_file = f"video_outputs/{sani_file_name}.mp4"
+    create_video_from_images_with_audio(update_images_in_frames, main_audio_path, output_video_file)
+    update_video_status(video_id, "Processing: Video created")
+    update_record(video_id, 'video_file', output_video_file)
 
 
 if __name__ == "__main__":
-    schedule_daily_videos()
+    #schedule_daily_videos()
+
+    contents = ["US shares and Bitcoin hit record high on Trump win in 2024 election", "ROSÉ & Bruno Mars - APT. (Official Lyric Video) - something about this recently released song"]
+    val = ["Who should Henry Cavill play in the MCU after Deadpool & Wolverine's Cavillrine cameo?",
+                "Top 5 Programming Languages to learn before 2025",
+                "What would be Avengers: Secret Wars' best superhero team-up?",
+                "Tips to improve your aim in Valorant to move to Radiant Rank",
+                "Squid Game 2 things you missed in recent trailer"]
+
+    for content in contents:
+        generate_video_for_sentence(content)

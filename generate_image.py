@@ -159,9 +159,10 @@ def select_best_fit_image(frame_folder, all_images_folder):
                 print(f"Skipping image with text/watermark: {img_path}")
                 img.close()
                 remove_image(img_path)  # Remove from frames folder
-                all_image_path = os.path.join(all_images_folder, os.path.basename(img_path))
-                if os.path.exists(all_image_path):
-                    remove_image(all_image_path)
+                if all_images_folder != "Empty":
+                    all_image_path = os.path.join(all_images_folder, os.path.basename(img_path))
+                    if os.path.exists(all_image_path):
+                        remove_image(all_image_path)
                 continue
 
             valid_images.append(img_path)
@@ -314,7 +315,7 @@ def process_images_for_frames(updated_frames):
                 all_images = [img for img in all_images if compute_image_hash(img) not in selected_image_hashes]
 
                 if all_images:
-                    selected_image_path = random.choice(all_images)  # Pick a random image
+                    selected_image_path = select_best_fit_image(all_images_folder, "Empty") # Pick a random image
                     img_hash = compute_image_hash(selected_image_path)  # Recompute hash for the new selection
                     print(f"++++++++++++++++++ RANDOM IMAGE PICKED --- Img Path - {selected_image_path} ++++++++++++++++++")
 

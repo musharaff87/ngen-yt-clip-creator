@@ -1,23 +1,20 @@
+import json
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from datetime import datetime, timedelta, timezone
 
-# Replace these with your actual tokens
-ACCESS_TOKEN = "ya29.a0AeDClZBAdTJTJTxQly5gTA9HZPOBh-ifJN8J5TFEjGnUhx29GrBg18QSfdY8wwz51mZOCwqO_RpZKQjLvSTcIg-tSNsy3xm6XB0yL2Gnrq6qtsWSjNhCzZUfsf2zjkWJGUTMFGbP4Sp4U3Pt6H05lUdZNbvarrZ25ARbzJDlaCgYKAaASARISFQHGX2MijpNTEUkhs2LEuDm3zS6hzA0175"
-REFRESH_TOKEN = "1//04KRAh_caalhzCgYIARAAGAQSNwF-L9IrYlVZTd8acpOmIEu3gjL4SAfKsKWxtAoGDak9p7axLpvCHDTGdNHhHmnOIhe_API0UFQ"
-CLIENT_ID = "917617153669-gjvkjgie84mc81l65a4pqjfdhqgf2mn1.apps.googleusercontent.com"  # Replace with your client ID
-CLIENT_SECRET = "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"  # Replace with your client secret
-SCOPES = ["https://www.googleapis.com/auth/youtube.upload"]
-
 def get_authenticated_service():
-    # Load credentials from existing access and refresh tokens
+    # Load credentials from the JSON file
+    with open("youtube_secrets.json", "r") as file:
+        creds_data = json.load(file)
+
     creds = Credentials(
-        token=ACCESS_TOKEN,
-        refresh_token=REFRESH_TOKEN,
-        client_id=CLIENT_ID,
-        client_secret=CLIENT_SECRET,
-        scopes=SCOPES
+        token=creds_data["access_token"],
+        refresh_token=creds_data["refresh_token"],
+        client_id=creds_data["client_id"],
+        client_secret=creds_data["client_secret"],
+        scopes=creds_data["scopes"]
     )
 
     # Build the YouTube API client with the credentials
@@ -40,7 +37,7 @@ def upload_video(video_file, title, description, tags, category_id, publish_time
             "privacyStatus": "private",  # Video will be private until publish time
             "license": "youtube",
             "publishAt": publish_time.isoformat(),  # Schedule publish time
-            "selfDeclaredMadeForKids": True  # Set whether the video is made for kids
+            "selfDeclaredMadeForKids": False  # Set whether the video is made for kids
         }
     }
 
@@ -69,37 +66,19 @@ if __name__ == "__main__":
     #youtube = get_authenticated_service()
 
     # Define video details
-    video_file = "video_outputs/history_Ballon_dor_football_award_created.mp4"
-    title = "The History of the BALLON D'OR: Football's Most Prestigious Award"
-    description = "Discover the fascinating history of the Ballon d'Or, football's most prestigious award. From its inception by France Football in 1956, the Ballon d'Or has become the ultimate prize, awarded annually to the player voted the best in the world. Learn how legends like Messi, Ronaldo, and other football greats have made their mark on this legacy of excellence, skill, and global influence in the game."
-    tags = [
-        "Ballon d'Or",
-        "Football Awards",
-        "Best Football Players",
-        "Lionel Messi",
-        "Cristiano Ronaldo",
-        "Cr7",
-        "GOAT",
-        "2024 Ballon d'Or",
-        "Football Highlights",
-        "World Cup",
-        "Champions League",
-        "Top Football Players",
-        "Football History",
-        "Messi vs Ronaldo",
-        "Football Skills",
-        "FIFA Rankings",
-        "Goalkeeper Saves"
-    ]
+    video_file = "video_outputs/Did you know that Taylor Swift just broke the record for the most Billboard Hot 100 entries by a female artist_ 🤯.mp4"
+    title = "TAYLOR SWIFT BREAKS BILLBOARD RECORD! 🤯 Most Hot 100 Entries EVER by a WOMAN"
+    description = "You won't believe this! Taylor Swift just shattered the record for the most Billboard Hot 100 entries by a female artist!  🤯  This is HUGE news for Swifties and music lovers everywhere.  Check out this video to see why Taylor is truly the QUEEN of the charts! 👑"
+    tags = ['Taylor Swift', 'Billboard Hot 100', 'Record', 'Music', 'Female Artist', 'Pop Music', 'Swifties', 'Music News', 'Chart History', 'Queen of Pop', 'Music Charts', 'Billboard', 'Latest Music', 'Trending Music', 'Taylor Swift News']
     category_id = "22"  # 22 is for 'People & Blogs'. Adjust based on your content.
 
     # Get publish time input in IST from user
-    ist_publish_time_str = "2024-10-29 02:13" #input("Enter the publish time in IST (format: YYYY-MM-DD HH:MM): ")
+    ist_publish_time_str = "2024-11-05 10:00" #input("Enter the publish time in IST (format: YYYY-MM-DD HH:MM): ")
     ist_publish_time = datetime.strptime(ist_publish_time_str, "%Y-%m-%d %H:%M")
 
     # Convert IST to UTC
     ist_offset = timedelta(hours=5, minutes=30)
-    publish_time = ist_publish_time - ist_offset  # Convert IST time to UTC
+    publish_time = ist_publish_time #- ist_offset  # Convert IST time to UTC
 
     # Upload the video
     upload_response = upload_video(video_file, title, description, tags, category_id, publish_time)
