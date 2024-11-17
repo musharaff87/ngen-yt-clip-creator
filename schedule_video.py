@@ -160,6 +160,8 @@ def generate_video_for_sentence(sentence):
     # Generate audio
     output_audio_file = f"{sani_file_name}.mp3"
     brief_content = get_brief_content(sentence)
+    brief_content = brief_content.replace("*", "")
+    brief_content = brief_content.replace("#", "")
     main_audio_path = generate_audio_elevenlabs(brief_content, output_audio_file)
 
     # Update status to indicate audio creation success
@@ -189,12 +191,6 @@ def generate_video_for_sentence(sentence):
 if __name__ == "__main__":
     #schedule_daily_videos()
 
-    contents = ["US shares and Bitcoin hit record high on Trump win in 2024 election", "ROSÉ & Bruno Mars - APT. (Official Lyric Video) - something about this recently released song"]
-    val = ["Who should Henry Cavill play in the MCU after Deadpool & Wolverine's Cavillrine cameo?",
-                "Top 5 Programming Languages to learn before 2025",
-                "What would be Avengers: Secret Wars' best superhero team-up?",
-                "Tips to improve your aim in Valorant to move to Radiant Rank",
-                "Squid Game 2 things you missed in recent trailer"]
-
+    contents = ["Did you notice this in Dead and Wolverine movie?", "Did anyone beat the celetials in marvel comics", "top 5 strongest avengers", "Jake paul beat mike tyson in recent match", "top 5 science fiction movies about one by one"]
     for content in contents:
         generate_video_for_sentence(content)

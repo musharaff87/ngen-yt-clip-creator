@@ -21,6 +21,56 @@ def resize_image(image_path, target_size):
     resized_image.save(resized_image_path)
     return resized_image_path
 
+def resize_image2(image_path, target_size):
+    """
+    Resizes an image to a mobile-friendly aspect ratio (similar to 9:16),
+    cropping edges if necessary, and then resizes to the target size.
+    """
+    image = Image.open(image_path)
+    original_width, original_height = image.size
+    original_aspect_ratio = original_width / original_height
+    mobile_aspect_ratio = target_size[0] / target_size[1]  # 9:16 ratio
+
+    # Print original details
+    print(f"Original Image Size: {original_width}x{original_height}")
+    print(f"Original Aspect Ratio: {original_aspect_ratio:.2f}")
+    print(f"Target Aspect Ratio: {mobile_aspect_ratio:.2f}")
+
+    # Determine if we need to crop
+    if abs(original_aspect_ratio - mobile_aspect_ratio) > 0.05:
+        print("Aspect ratio difference detected, cropping required.")
+        # Crop to maintain a 9:16 aspect ratio
+        if original_aspect_ratio > mobile_aspect_ratio:
+            # Wider than 9:16, crop width
+            new_width = int(mobile_aspect_ratio * original_height)
+            left = (original_width - new_width) // 2
+            print(f"Cropping width from {original_width} to {new_width}")
+            print(f"Crop box (left, top, right, bottom): ({left}, 0, {left + new_width}, {original_height})")
+            image = image.crop((left, 0, left + new_width, original_height))
+        else:
+            # Taller than 9:16, crop height
+            new_height = int(original_width / mobile_aspect_ratio)
+            top = (original_height - new_height) // 2
+            print(f"Cropping height from {original_height} to {new_height}")
+            print(f"Crop box (left, top, right, bottom): (0, {top}, {original_width}, {top + new_height})")
+            image = image.crop((0, top, original_width, top + new_height))
+    else:
+        print("Aspect ratio is close enough, no cropping needed.")
+
+    # Resize the cropped or original image
+    resized_image = image.resize(target_size, Image.Resampling.LANCZOS)
+    print(f"Resized Image Size: {target_size[0]}x{target_size[1]}")
+
+    # Save the resized image
+    resized_images_folder = os.path.join(os.path.dirname(image_path), 'resized_images')
+    os.makedirs(resized_images_folder, exist_ok=True)
+    resized_image_path = os.path.join(resized_images_folder, os.path.basename(image_path))
+    resized_image.save(resized_image_path)
+
+    print(f"Resized image saved to: {resized_image_path}")
+
+    return resized_image_path
+
 def apply_transitions(img_clip, duration):
     """Apply transitions like fade-in and fade-out to the image clip."""
     img_clip = vfx.fadein(img_clip, duration=0.3).fadeout(0.3)  # Using fadein and fadeout from vfx
@@ -193,9 +243,37 @@ def create_video_from_images_with_audio(image_data, audio_file, output_video_fil
         print(f"Error Generating Video... {e}")
 
 if __name__ == "__main__":
-  update_images_in_frames = [{'audio_duration': '0.0s - 4.32s', 'actual_keyword': 'Did you know that the tensions between Iran and Israel are at a boiling point?', 'search_keyword': 'Iran and Israel conflict hd portrait images', 'image_path': 'selected_images\\sample_image_1_6.jpeg'}, {'audio_duration': '5.2s - 7.2s', 'actual_keyword': "It's like a pressure cooker.", 'search_keyword': 'hd portrait images of a pressure cooker with a war-torn landscape in the background', 'image_path': 'selected_images\\sample_image_1_15.jpeg'}, {'audio_duration': '7.2s - 12.8s', 'actual_keyword': 'With both sides constantly throwing barbs and threats across the volatile landscape of the middle.', 'search_keyword': 'Iranian and Israeli soldiers facing each other on a battlefield hd portrait images', 'image_path': 'selected_images\\sample_image_2_13.jpeg'}, {'audio_duration': '13.52s - 18.16s', 'actual_keyword': 'East the latest news is a mix of saber rattling and diplomatic maneuvering.', 'search_keyword': 'hd portrait images of soldiers from Iran and Israel facing each other', 'image_path': 'selected_images\\sample_image_2_1.jpeg'}, {'audio_duration': '18.88s - 24.48s', 'actual_keyword': "But the underlying threat of an all-out war is still hanging over everyone's heads like a dark cloud.", 'search_keyword': 'hd portrait images of soldiers from Iran and Israel standing face to face with a dark cloud above them', 'image_path': 'selected_images\\sample_image_5_25.jpeg'}, {'audio_duration': '25.36s - 32.24s', 'actual_keyword': 'Last week, Iranian officials vowed to wipe Israel off the map while Israeli Prime Minister Benjamin.', 'search_keyword': 'hd portrait images of iranian and israeli leaders facing each other', 'image_path': 'selected_images\\sample_image_6_3.jpeg'}, {'audio_duration': '33.04s - 37.84s', 'actual_keyword': 'Netanyahu countered with threats of crushing Iranian nuclear facilities.', 'search_keyword': 'hd portrait images of Benjamin Netanyahu looking stern and determined', 'image_path': 'selected_images\\sample_image_7_10.jpeg'}, {'audio_duration': '38.4s - 44.08s', 'actual_keyword': "It's a dangerous game of chicken, with the possibility of an accidental spark setting off a", 'search_keyword': 'hd portrait images of iranian and israeli soldiers facing each other with tension', 'image_path': 'selected_images\\sample_image_7_11.jpeg'}, {'audio_duration': '44.08s - 52.16s', 'actual_keyword': 'firestorm across the region. The US, caught in the middle, is trying to de-escalate the situation,', 'search_keyword': 'hd portrait images of a burning city skyline with a US flag waving in the wind', 'image_path': 'selected_images\\sample_image_7_14.jpeg'}, {'audio_duration': '52.16s - 57.44s', 'actual_keyword': 'but its influence seems to be waning, leaving a dangerous power vacuum.', 'search_keyword': 'hd portrait images of soldiers from iran and israel in a conflict scene', 'image_path': 'selected_images\\sample_image_7_10.jpeg'}, {'audio_duration': '57.44s - 62.24s', 'actual_keyword': 'The tension is further amplified by the ongoing shadow war in the cyber realm.', 'search_keyword': 'hd portrait images of soldiers in cyber warfare', 'image_path': 'selected_images\\sample_image_6_19.jpeg'}, {'audio_duration': '63.04s - 68.88s', 'actual_keyword': 'With Iranian hackers targeting Israeli infrastructure and Israeli cyber warriors launching,', 'search_keyword': 'hd portrait images of soldiers from israel and iran facing each other', 'image_path': 'selected_images\\sample_image_5_25.jpeg'}, {'audio_duration': '69.44s - 75.76s', 'actual_keyword': "counter attacks. It's a silent battle, fought in the dark with lines of code instead of bullets.", 'search_keyword': 'hd portrait images of a soldier in the dark with code flowing around them', 'image_path': 'selected_images\\sample_image_6_3.jpeg'}, {'audio_duration': '76.24s - 81.6s', 'actual_keyword': 'But the potential damage is just as real. The world is watching with baited breath.', 'search_keyword': 'hd portrait images of people watching news about Iran vs Israel war with concern', 'image_path': 'selected_images\\sample_image_3_16.jpeg'}, {'audio_duration': '81.6s - 92.16s', 'actual_keyword': "Hoping this tense standoff won't escalate into a full-blown war.", 'search_keyword': 'hd portrait images of soldiers from Iran and Israel standing face to face', 'image_path': 'selected_images\\sample_image_7_10.jpeg'}]
-  audio_file = 'sample_audio/iran_war.mp3'
-  output_video_file = 'video_outputs/edited_war.mp4'
+  update_images_in_frames = [{'audio_duration': '0.0s - 1.86667s', 'actual_keyword': 'Hey, everyone, you got to hear this.', 'search_keyword': 'Game of Thrones best series dragon scene', 'image_path': 'selected_images\\sample_image_3_1.jpeg'},
+{'audio_duration': '1.86667s - 3.73334s', 'actual_keyword': 'Game of Thrones is still the King of TV', 'search_keyword': 'Game of Thrones Iron Throne still best TV show', 'image_path': 'selected_images\\sample_image_3_2.jpeg'},
+{'audio_duration': '3.73333s - 5.6s', 'actual_keyword': 'even after that', 'search_keyword': 'Game of Thrones characters even after the ending', 'image_path': 'selected_images\\sample_image_8_3.jpeg'},
+{'audio_duration': '5.6s - 7.76s', 'actual_keyword': "controversial ending. Why? Because it's", 'search_keyword': 'Game of Thrones ending fan art', 'image_path': 'selected_images\\sample_image_10_4.jpeg'},
+{'audio_duration': '7.76s - 9.92s', 'actual_keyword': 'got everything. Epic battles with', 'search_keyword': 'Game of Thrones epic battle scenes', 'image_path': 'selected_images\\sample_image_1_5.jpeg'},
+{'audio_duration': '9.92s - 12.08s', 'actual_keyword': 'dragons soaring', 'search_keyword': 'dragon soaring over a castle', 'image_path': 'selected_images\\sample_image_10_6.jpeg'},
+{'audio_duration': '12.08s - 14.34667s', 'actual_keyword': 'through the sky. I see landscapes and', 'search_keyword': 'dragons flying over landscapes in game of thrones', 'image_path': 'selected_images\\sample_image_5_7.jpeg'},
+{'audio_duration': '14.34667s - 16.61334s', 'actual_keyword': 'swords clashing. Then there are the', 'search_keyword': 'swords clashing in game of thrones battle', 'image_path': 'selected_images\\sample_image_6_8.jpeg'},
+{'audio_duration': '16.61333s - 18.88s', 'actual_keyword': 'characters. Oh, man,', 'search_keyword': 'Game of Thrones characters with swords', 'image_path': 'selected_images\\sample_image_6_9.png'},
+{'audio_duration': '18.88s - 21.92s', 'actual_keyword': "they're complex and flawed. You've got", 'search_keyword': 'Game of Thrones characters with flaws', 'image_path': 'selected_images\\sample_image_3_10.png'},
+{'audio_duration': '21.92s - 24.96s', 'actual_keyword': 'John Snow, the noble bastard, Daenerys Targaryen,', 'search_keyword': 'Daenerys Targaryen dragons Game of Thrones', 'image_path': 'selected_images\\sample_image_3_11.jpeg'},
+{'audio_duration': '24.96s - 26.77333s', 'actual_keyword': 'the Queen with fire in her eyes, and', 'search_keyword': 'Daenerys Targaryen with fire in her eyes', 'image_path': 'selected_images\\sample_image_7_12.jpeg'},
+{'audio_duration': '26.77333s - 28.58666s', 'actual_keyword': 'Tyrion Lannister, the cleverest dwarf', 'search_keyword': 'Tyrion Lannister Game of Thrones Quotes', 'image_path': 'selected_images\\sample_image_4_13.jpeg'},
+{'audio_duration': '28.58667s - 30.4s', 'actual_keyword': 'in Westeros.', 'search_keyword': 'Westeros map with important locations', 'image_path': 'selected_images\\sample_image_5_14.jpeg'},
+{'audio_duration': '31.04s - 33.12s', 'actual_keyword': "Plus, the plot is so intricate, it's", 'search_keyword': 'Game of Thrones intricate plot details', 'image_path': 'selected_images\\sample_image_7_15.jpeg'},
+{'audio_duration': '33.12s - 35.2s', 'actual_keyword': 'like trying to untangle a thousand', 'search_keyword': 'untangling a thousand threads of plot in Game of Thrones', 'image_path': 'selected_images\\sample_image_8_16.jpeg'},
+{'audio_duration': '35.2s - 37.28s', 'actual_keyword': 'knots. But the real genius', 'search_keyword': 'Game of Thrones characters with intricate hair knots', 'image_path': 'selected_images\\sample_image_8_17.jpeg'},
+{'audio_duration': '37.28s - 38.90667s', 'actual_keyword': 'of Game of Thrones is the way it makes', 'search_keyword': 'Game of Thrones characters with dragons', 'image_path': 'selected_images\\sample_image_4_18.jpeg'},
+{'audio_duration': '38.90667s - 40.53334s', 'actual_keyword': "you question everything. It's not black", 'search_keyword': 'Questioning the Game of Thrones ending', 'image_path': 'selected_images\\sample_image_5_19.jpeg'},
+{'audio_duration': '40.53333s - 42.16s', 'actual_keyword': 'and white,', 'search_keyword': 'black and white wolf with red eyes', 'image_path': 'selected_images\\sample_image_10_20.jpeg'},
+{'audio_duration': '42.16s - 44.05333s', 'actual_keyword': "it's shades of gray with everyone", 'search_keyword': 'Game of Thrones characters with gray morality', 'image_path': 'selected_images\\sample_image_9_21.jpeg'},
+{'audio_duration': '44.05333s - 45.94666s', 'actual_keyword': "playing the game of power. It's a", 'search_keyword': 'Iron Throne Game of Thrones power struggle', 'image_path': 'selected_images\\sample_image_6_22.jpeg'},
+{'audio_duration': '45.94667s - 47.84s', 'actual_keyword': 'series that stays with you long', 'search_keyword': 'Best TV series that leave a lasting impact', 'image_path': 'selected_images\\sample_image_9_23.jpeg'},
+{'audio_duration': '47.84s - 49.89333s', 'actual_keyword': 'after you finish watching, leaving you', 'search_keyword': 'Feeling empty after finishing a great tv show', 'image_path': 'selected_images\\sample_image_5_24.jpeg'},
+{'audio_duration': '49.89333s - 51.94666s', 'actual_keyword': 'thinking about the politics, the', 'search_keyword': 'Game of Thrones political alliances and betrayals', 'image_path': 'selected_images\\sample_image_9_25.jpeg'},
+{'audio_duration': '51.94667s - 54.0s', 'actual_keyword': 'characters, and the fate of Westeros.', 'search_keyword': 'Game of Thrones characters and their fates in Westeros', 'image_path': 'selected_images\\sample_image_8_26.jpeg'},
+{'audio_duration': '54.0s - 59.4s', 'actual_keyword': "So if you haven't seen it yet, you're", 'search_keyword': '** Game of Thrones characters', 'image_path': 'selected_images\\sample_image_9_14.png'},
+{'audio_duration': '59.4s - 64.8s', 'actual_keyword': 'missing out on a truly epic journey.', 'search_keyword': 'Epic journey through Westeros', 'image_path': 'selected_images\\sample_image_7_28.jpeg'},
+]
+  audio_file = 'sample_audio/why game of thrones is best series.mp3'
+  output_video_file = 'video_outputs/edited_got.mp4'
 
   # Create the video from images and audio
   create_video_from_images_with_audio(update_images_in_frames, audio_file, output_video_file)

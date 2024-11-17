@@ -18,7 +18,7 @@ genai.configure(api_key=load_api_key())
 
 # Create the model
 generation_config = {
-    "temperature": 1,
+    "temperature": 2,
     "top_p": 0.95,
     "top_k": 64,
     "max_output_tokens": 4000,  # Set max output tokens to 400
@@ -99,7 +99,7 @@ def generate_video_metadata(sentence):
 def get_brief_content(sentence):
     print("Generating Content from Gemini...")
     # Create a prompt that includes the user's input
-    prompt = f"provide a brief, up-to-date description about this recent news: \"{sentence}\"\n. Include living and non-living objects where relevant. Make it sound like a YouTuber explaining to viewers in a conversational tone\n. Also use attracting sentence in the start of the context like eg: did you know?, you must know this, watch this boost your intelligence, etc.. related to content \n . Also omit sentence like welcome back to channel like that just start talking with viewers\n Limit the response to 150 - 200 words."
+    prompt = f"provide a brief, up-to-date description about this recent news: \"{sentence}\"\n. Include living and non-living objects where relevant. Make it sound like a YouTuber explaining to viewers in a conversational tone\n. Also use attracting sentence in the start of the context like eg: did you know?, you must know this, watch this boost your intelligence, etc.. related to content \n . Also omit sentence like welcome back to channel like that just start talking with viewers\n Limit the response to 150 - 180 words."
 
     # Start chat session with initial message
     chat_session = model.start_chat(
@@ -292,7 +292,7 @@ def call_gemini_with_retry(prompt, max_retries=10, initial_sleep=2, max_sleep=30
 
     # If we exhaust all retries, return None or handle the failure as needed
     print("Max retries reached. No response received.")
-    return None
+    return "Random Nature hd"
 
 # Example usage
 if __name__ == "__main__":
