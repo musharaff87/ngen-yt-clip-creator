@@ -126,11 +126,28 @@ def change_pitch(file_path, semitones):
 
 
 if __name__ == "__main__":
-    brief_content = "Hello this is sample content"  # Replace with actual content
-    output_file = "sample_audio/audio_1.mp3"
+    # brief_content = "Hello this is sample content"  # Replace with actual content
+    # output_file = "sample_audio/audio_1.mp3"
+    #
+    # # Ensure the directory exists
+    # os.makedirs(os.path.dirname(output_file), exist_ok=True)
+    #
+    # path = generate_audio(brief_content, output_file)
+    # print(f"Audio saved at: {path}")
 
-    # Ensure the directory exists
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+    api_keys = load_api_keys()
+    for api_key in api_keys:
+        headers = {
+            "xi-api-key": api_key
+        }
 
-    path = generate_audio(brief_content, output_file)
-    print(f"Audio saved at: {path}")
+        # Send a GET request to the user endpoint to check credits
+        response = requests.get("https://api.elevenlabs.io/v1/user", headers=headers)
+
+        if response.status_code == 200:
+            user_data = response.json()
+            character_limit = user_data['subscription']['character_limit']
+            character_count = user_data['subscription']['character_count']
+            remaining_characters = character_limit - character_count
+            print(f"Charecter Count: #{character_count}")
+            print(f"Remaining characters for synthesis: {remaining_characters}")

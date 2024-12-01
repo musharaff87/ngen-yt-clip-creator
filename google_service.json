@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "halogen-emblem-420216",
+  "private_key_id": "33b27e4497b47ddafedfb9f44dd2ee4ec8e609aa",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDTY6vJJAaFpbz6\nCWyAOUCDmag+etCN3O4Jm1sTVUQ/lCQX4m+0fctmzJlN5/rywiZxpGbialIIr6OX\nG6K/KV5r+0ZQzu/VzL0WN8AdBlaKwbLrzyvIMRVT+pKoi0Vgx0ozGBl2vkliTZP8\nbhvT8w5iGtfRtIVuVHXcovAz9/TEFjRDbc20Pj61LfJc5YvppgwA6CSLaTUuJhuw\nPqm1D6Bs5MoSNA0ES9kJFKk5Hg95PtQSywLRd0y86+fDtMiGysjufA+IO/0lkTEz\nU9u8iae/KvcV2YVCC1+QOJv6i2BFQ68Ak8LpP8Xe6cDBCPyvAth2Xe/KA1uSgBri\nwsrtKoIVAgMBAAECggEANgRzQmv1SrOmjdJYqo92v+pFBupFXusE3OmZJWCVlxWY\n/416dAntLzC7QCA2jVA1mLalH9iBa/zN9fA271h362oDduTafqzZ6NKIQiJ7fOuw\nd/exvW9lftc6IN2t9eQXPuU6pJBNmlQuq8PLUqb6lvE7EzhpHF9y2tW8Qdtr7asz\ngNr8lsBW5+E5jG4CKrF0aR5bd4QoNxDvL53bGEkR//yW5W6CCgvnZUoTtA/mZEhG\nlRsa3CqaknZRqmroqaT+nrsCRNyHdsouFhY/HgDoG5jrYzeYENirjHNfBQR45hyR\nGU1+Cg+ZNkmrt4XI+NcaGAQufqLXwWeB8IyQmq6zJQKBgQD+rFEkQ/I6s+xRDmyp\n1rtZJ47r3LsYhpiFNZ3gmgfofNr/naowVHi965NJQFxgqdjlKmFrl9WvH/DktPfU\nHqy/s7PmMmhTw2Xy9KDD+skP66yefukIP1szEaOKM8gLOIWFJuq4Z34rS8DptSaa\n2CyRNuNT3rCBMciaBuI467H+mwKBgQDUfZ9G1KMu+K3CTLiWXYUS1p2mOd4pM38+\n0Z8zQGr/sNXpLi9IjcxTy0H7jcImWKymWmhG0J9bd+HdLp3YiAKEQhRBu/Ux4qvR\neopaBOuH2B/38okKncGzgFtTaPF/iW0cuKXq2xCB80gdorzBRwWupJArlTXs4sDm\nMOhFtTu1DwKBgQDjiZ3tou93V23adeLMU9iLrXZacZqQLSF0UxU9qSFLrNIV9A4s\npCxEs4eiuOhQTTBGf/kOolf+4bDfBnkugkGh/bLMB1mDDV+3FK3Wq+icWtqduZIH\nFmQrWqUdQ2qF6/gPoVexbnYhxMsVhA575ozbKYkuVBarN4mdZG0Woi8j5QKBgQCd\nuZlutAtkpEYmAVjKlCRg9VkTt8SGBKmg8WwgWOKTZKmDajrCui4+zJLvrCu+1vdg\ni573YYfIF1ZaHW4g+eQUVBBBMskv/DbZSQJFC33g2bXxD+BVNwA+wzoG0dDggBuz\nxAO0LmM0cmbHSLKfLJ61IYW6NAlRCodw1kCy7XGiVQKBgQDUT3LDJJNR+Q3aXOsZ\nQn8pDI9YBET9iGJZBXr+h4AIC4WQy/DNuV8ZOFKx6xZYv9dqAYn7QRH0cDKF5d7l\nYRbCj8h7yMBqKfcP8mJcKpg2r+kxRgcmxYqukPIjWHPjIaSrnS5h6rLKnX9mItCb\nB8bDGt3uKqQk37SozOdPkEcgTw==\n-----END PRIVATE KEY-----\n",
+  "client_email": "youtube-sheet-maintain@halogen-emblem-420216.iam.gserviceaccount.com",
+  "client_id": "107807107981335431661",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/youtube-sheet-maintain%40halogen-emblem-420216.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

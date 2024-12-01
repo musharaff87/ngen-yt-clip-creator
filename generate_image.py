@@ -24,7 +24,7 @@ def get_newly_created_folder(base_folder):
 
 
 def download_images(search_frame):
-    search_keyword = search_frame['search_keyword']
+    search_keyword = search_frame['search_keyword'] + " HD"
     words = search_keyword.split()
     max_attempts = len(words) // 2 + (1 if len(words) % 2 != 0 else 0)
     attempt_counter = 1

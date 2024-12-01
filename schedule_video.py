@@ -191,6 +191,6 @@ def generate_video_for_sentence(sentence):
 if __name__ == "__main__":
     #schedule_daily_videos()
 
-    contents = ["Did you notice this in Dead and Wolverine movie?", "Did anyone beat the celetials in marvel comics", "top 5 strongest avengers", "Jake paul beat mike tyson in recent match", "top 5 science fiction movies about one by one"]
+    contents = []
     for content in contents:
         generate_video_for_sentence(content)
