@@ -54,6 +54,12 @@ def check_existing_video(publish_time):
     cursor.close()
     return exists
 
+def list_all_videos_api():
+    cursor = CONN.cursor()
+    cursor.execute('SELECT id, status, sentence, title, description, tags, category, upload_date, video_file, audio_file FROM video_metadata')
+    rows = cursor.fetchall()
+    cursor.close()
+    return rows
 
 def list_all_videos():
     cursor = CONN.cursor()
