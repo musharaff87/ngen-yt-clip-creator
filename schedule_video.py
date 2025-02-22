@@ -8,6 +8,7 @@ from generate_image import *
 from generate_video_with_images import *
 from upload_video_in_youtube import *
 from database import *
+from sheet import push_video_metadata_to_sheet
 
 import time
 from datetime import datetime, timedelta
@@ -153,6 +154,9 @@ def generate_video_for_sentence(sentence):
         category="NA",
         upload_date=today_date
     )
+    formatted_date = today_date.strftime('%Y-%m-%d')
+    push_video_metadata_to_sheet([sentence, title, description, ",".join(tags), formatted_date])
+
     sani_file_name = sanitize_directory_name(sentence)
     if len(sani_file_name) > 40:
         sani_file_name = sani_file_name[:39]
@@ -169,7 +173,7 @@ def generate_video_for_sentence(sentence):
 
     # Transcribe audio and generate frames
     formatted_frames = transcribe_audio_and_format(main_audio_path)
-    update_video_status(video_id, "Processing: Audio transcribed")
+    update_video_status(video_id, "Proces sing: Audio transcribed")
     update_record(video_id, 'audio_file', main_audio_path)
 
 
@@ -191,6 +195,13 @@ def generate_video_for_sentence(sentence):
 if __name__ == "__main__":
     #schedule_daily_videos()
 
-    contents = []
+    contents = ["Multiple Thors: Beyond the well-known Thor, there exists a character named Throg, who is a frog with powers similar to Thor's. He leads the Pet Avengers, a group of animal heroes",
+                "Michael Jackson's Interest: Pop icon Michael Jackson once attempted to buy Marvel Comics with the intention of playing Spider-Man in a film adaptation, showcasing the character's immense cultural impact even outside traditional comic book fans",
+                "Superman's Purchase Price: Superman was sold to DC Comics for only $130 in 1938 by his creators Jerry Siegel and Joe Shuster. This deal is often cited as one of the most significant miscalculations in comic book history, given Superman's subsequent success",
+                "Batman’s Utility Belt: The concept of Batman's utility belt was first introduced in Detective Comics No. 29 (July 1939), which has since become an iconic aspect of his character design and functionality",
+                "Shazam’s Name Change: Originally named Captain Marvel, Shazam had to change his name due to trademark issues with Marvel Comics, which registered their own Captain Marvel",
+                "game of thrones: Though Ned Stark is well known as the Hand to King Robert Baratheon, he wasn't the first Stark to have been the Hand of the King. After the Dance of the Dragons, which is likely to be depicted in House of the Dragon, Cregan Stark served as the Hand of the King to Aegon III Targaryen.",
+                "game of thrones: There's a reason that the Starks and the North were vulnerable to attack by the Iron Fleet when Theon Greyjoy came to attack Winterfell. After Brandon the Shipwright was lost at sea, thousands of years before the main series, the next King of Winter, Brandon the Burner, set fire to the entire Northern Navy in a promise to never to see the Starks at sea again.",
+                "Benedict Cumberbatch is talking about Doctor Strange's future in the MCU, including whether he will appear in Avengers: Doomsday. "]
     for content in contents:
         generate_video_for_sentence(content)

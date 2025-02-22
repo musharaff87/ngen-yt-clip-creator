@@ -19,19 +19,14 @@ def connect_to_google_sheet(sheet_name):
     sheet = client.open(sheet_name).sheet1
     return sheet
 
-def push_video_metadata_to_sheet(sheet, video_data):
+def push_video_metadata_to_sheet(video_data):
     """
     Append video metadata to the Google Sheet.
     """
-    sheet.append_row([
-        video_data["video_id"],
-        "",
-        "",
-        ""
-    ])
+    sheet = connect_to_google_sheet("Youtube Track")
+    sheet.append_row(video_data)
     print("[INFO] Video metadata pushed to Google Sheet.")
 
 
 if __name__ == "__main__":
-    sheet = connect_to_google_sheet("Youtube Track")
-    push_video_metadata_to_sheet(sheet, {"video_id": "2323"})
+    push_video_metadata_to_sheet(["video_id","2323","test","heell", "val","hel"])

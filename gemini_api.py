@@ -18,7 +18,7 @@ genai.configure(api_key=load_api_key())
 
 # Create the model
 generation_config = {
-    "temperature": 3,
+    "temperature": 2,
     "top_p": 0.95,
     "top_k": 40,
     "max_output_tokens": 4000,  # Set max output tokens to 400
@@ -99,7 +99,7 @@ def generate_video_metadata(sentence):
 def get_brief_content(sentence):
     print("Generating Content from Gemini...")
     # Create a prompt that includes the user's input
-    prompt = f"provide a short up-to-date content about this recent news: \"{sentence}\"\n Search From Web And Get the correct news or story. Make it sound like a YouTuber explaining to viewers in a conversational tone\n. Also use attracting sentence in the start of the context like eg: did you know?, you must know this, etc.. related to content \n . Also omit sentence like welcome back to channel like that just start talking with viewers and don't give unwanted talk just explain content\n Note: Must Limit the response to 120 - 160 words."
+    prompt = f"content:  \"{sentence}\"\n provide a short up-to-date content about this recent news or existing story in books based on the content i mentioned above .\n Search From Web And Get the correct news or story. \n Make it sound like a YouTuber explaining to viewers in a conversational tone\n. Also use attracting sentence in the start of the context like eg: did you know?, you must know this, etc.. related to content \n . Also omit sentence like welcome back to channel like that just start talking with viewers and don't give unwanted talk just explain content\n Note: Must Limit the response to 120 - 160 words."
 
     # Start chat session with initial message
     chat_session = model.start_chat(
@@ -145,7 +145,7 @@ def generate_search_keywords(formatted_frames, main_content_sentence):
         prompt = (
             f"this is actual_keyword = {actual_keyword}\n"
             f"this is main_content = {main_content_sentence}\n\n"
-            f"Generate relevant search keywords for the actual keyword.\n"
+            f"Generate relevant search keywords for the actual_keyword also that is some what related to main_content.\n"
             f"the search keyword must have objects or living things or something sentence that is meaningful to generate images.\n"
             f"Also if any name or person present in actual keyword generate search keyword related to that\n"
             f"also the search keyword should more likely a google search keyword.\n"

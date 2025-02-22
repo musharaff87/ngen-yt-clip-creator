@@ -42,7 +42,7 @@ def download_images(search_frame):
         def download_function():
             nonlocal downloaded_images
             print("Downloading Image...")
-            downloaded_images = pi.download(keywords=sanitized_keyword, limit=10)
+            downloaded_images = pi.download(keywords=sanitized_keyword, limit=15)
             True
 
         # Create a thread to run the download function
@@ -145,6 +145,8 @@ def contains_text(img_path):
 
 def select_best_fit_image(frame_folder, all_images_folder):
     image_files = glob.glob(os.path.join(frame_folder, '*'))
+    random_images_folder = "random_images"
+    selected_images_folder = "selected_images"
     valid_images = []
     best_image = None
     best_resolution = 0
@@ -188,15 +190,67 @@ def select_best_fit_image(frame_folder, all_images_folder):
 
     # If no portrait-like image is found, select the best quality random image near mobile portrait ratio
     if quality_images:
-        selected_image = max(quality_images, key=lambda x: x[1])[0]  # Select the image with the highest resolution
-        print(f"No portrait-like image found, selecting best quality image: {selected_image}")
+        selected_image_paths = [
+            os.path.join(selected_images_folder, img)
+            for img in os.listdir(selected_images_folder)
+            if os.path.isfile(os.path.join(selected_images_folder, img))
+        ]
+
+        # If no images in selected folder, use random images folder
+        if selected_image_paths:
+            selected_image = random.choice(selected_image_paths)
+            print(f"Randomly selected image from selected_images_folder: {selected_image}")
+        else:
+            print("No images found in selected_images_folder. Falling back to random_images_folder.")
+            random_image_paths = [
+                os.path.join(random_images_folder, img)
+                for img in os.listdir(random_images_folder)
+                if os.path.isfile(os.path.join(random_images_folder, img))
+            ]
+
+            if random_image_paths:
+                selected_image = random.choice(random_image_paths)
+                print(f"Randomly selected image from random_images_folder: {selected_image}")
+            else:
+                print("No images found in random_images_folder either.")
+                return None
+
         return selected_image
+        # selected_image = max(quality_images, key=lambda x: x[1])[0]  # Select the image with the highest resolution
+        # print(f"No portrait-like image found, selecting best quality image: {selected_image}")
+        # return selected_image
 
     # If no images meet criteria, select a random image
     if valid_images:
-        selected_image = random.choice(valid_images)
-        print(f"No portrait-like image found, selecting random image: {selected_image}")
+        selected_image_paths = [
+            os.path.join(selected_images_folder, img)
+            for img in os.listdir(selected_images_folder)
+            if os.path.isfile(os.path.join(selected_images_folder, img))
+        ]
+
+        # If no images in selected folder, use random images folder
+        if selected_image_paths:
+            selected_image = random.choice(selected_image_paths)
+            print(f"Randomly selected image from selected_images_folder: {selected_image}")
+        else:
+            print("No images found in selected_images_folder. Falling back to random_images_folder.")
+            random_image_paths = [
+                os.path.join(random_images_folder, img)
+                for img in os.listdir(random_images_folder)
+                if os.path.isfile(os.path.join(random_images_folder, img))
+            ]
+
+            if random_image_paths:
+                selected_image = random.choice(random_image_paths)
+                print(f"Randomly selected image from random_images_folder: {selected_image}")
+            else:
+                print("No images found in random_images_folder either.")
+                return None
+
         return selected_image
+        # selected_image = random.choice(valid_images)
+        # print(f"No portrait-like image found, selecting random image: {selected_image}")
+        # return selected_image
 
     return None
 
@@ -323,7 +377,12 @@ def process_images_for_frames(updated_frames):
 
             img_name = os.path.basename(selected_image_path)
             final_image_path = os.path.join(selected_images_folder, img_name)
-            shutil.copy(selected_image_path, final_image_path)
+            if os.path.abspath(selected_image_path) == os.path.abspath(final_image_path):
+                print(f"Source and destination are the same file: {selected_image_path}")
+            else:
+                shutil.copy(selected_image_path, final_image_path)
+                print(f"Copied {selected_image_path} to {final_image_path}")
+
             print(f"Selected image copied to final folder: {final_image_path}")
 
             # Remove the selected image from the all_images folder
