@@ -7,10 +7,11 @@ selected_images/
 images/
 frames/
 video_outputs/
-sample_audio/
 background_music/
 eleven_labs_api_keys.json
 client_secret.json
 youtube_secrets.json
 credentials.storage
 client_secret_2.json
+virtual.pem
+ignored_files.tar.gz
