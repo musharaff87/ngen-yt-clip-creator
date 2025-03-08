@@ -24,7 +24,7 @@ def authenticate_youtube():
         if credentials and credentials.expired and credentials.refresh_token:
             credentials.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file("client_secret_new_1.json", SCOPES)
+            flow = InstalledAppFlow.from_client_secrets_file("client_secret_2.json", SCOPES)
             credentials = flow.run_local_server(port=8080)
             # Save credentials for future use
             with open(CREDENTIALS_FILE, 'w') as creds_file:
