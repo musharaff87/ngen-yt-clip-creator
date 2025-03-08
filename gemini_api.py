@@ -35,16 +35,14 @@ def generate_video_metadata(sentence):
     # Construct prompt to get a catchy title, description, trending tags, and publish time suggestion
     prompt = f"""
     Generate YouTube video metadata based on this true news content: "{sentence}".\n
-    1. Start with a catchy, click-worthy title with important words in capital letters.\n
-    2. Write a conversational description for viewers, beginning with a hook phrase like "Did you know?" or "You won't believe this!"\n
-    3. Generate 10-15 trending tags related to the topic, focusing on relevant and popular terms.\n
-    4. Provide the appropriate YouTube Data API category ID based on the content. For example, if about sports, choose "Sports" (category_id=17).\n
+    1. Start with a catchy, click-worthy title that attract audience to click the video.\n
+    2. Write a description for viewers related to content briefly describe with famouse and trending words related to that content.In the end of the description add trending hashtags related to content. the hashtags in the description starts with '#' symbol. MUST add 20 above hashtags in the description"\n
+    3. Generate 10-15 trending tags related to the topic, focusing on relevant and popular terms. Remember this tags should not start with '#' symbol .\n
 
     Please follow this format strictly:\n
     Title: [Catchy Title]\n
     Description: [Conversational Description starting with a hook]\n
     Tags: [Tag1, Tag2, Tag3, ..., TagN]\n
-    Category ID: [Numeric Category ID]\n
 
     Ensure each item is labeled clearly as shown and provide one item per line.\n
     """
@@ -80,12 +78,6 @@ def generate_video_metadata(sentence):
             description = line.replace("Description:", "").strip()
         elif line.startswith("Tags:"):
             tags = line.replace("Tags:", "").strip().split(", ")
-        elif line.startswith("Category ID:"):
-            try:
-                category_id_str = line.replace("Category ID:", "").strip()
-                category_id = int(category_id_str)
-            except ValueError:
-                category_id = 22  # Default in case of conversion error
     print(f"Title: {title}")
     print(f"Description: {description}")
     print(f"Tags: {tags}")
@@ -298,6 +290,10 @@ def call_gemini_with_retry(prompt, max_retries=10, initial_sleep=2, max_sleep=30
 if __name__ == "__main__":
     print("What do you want? \n")
     sentence = input()
+    title, description, tags, category_id = generate_video_metadata(sentence)
+    print(title)
+    print(description)
+    print(tags)
     #sentence = "beautiful bird is peacock"
     brief_content = get_brief_content(sentence)
     print(brief_content)

@@ -35,6 +35,8 @@ def authenticate_youtube():
 def upload_video(video_id, video_file, title, description, tags, category_id, publish_time):
     category_id = "24"
     """Upload a video to YouTube and update its status."""
+
+    title = title + " #shorts"
     youtube = authenticate_youtube()
     ist_offset = timedelta(hours=5, minutes=30)
     publish_time = publish_time - ist_offset  # Convert IST to UTC
