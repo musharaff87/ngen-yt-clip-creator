@@ -8,6 +8,7 @@ import time
 
 from PIL import Image
 from pygoogle_image import image as pi
+from icrawler.builtin import GoogleImageCrawler
 import pytesseract
 import cv2
 import numpy as np
@@ -22,51 +23,59 @@ def get_newly_created_folder(base_folder):
     latest_folder = max(subfolders, key=os.path.getctime)
     return latest_folder
 
-
 def download_images(search_frame):
-    search_keyword = search_frame['search_keyword'] + " HD"
+    search_keyword = search_frame['search_keyword'] + " HD"  # e.g., "hello world HD"
     words = search_keyword.split()
     max_attempts = len(words) // 2 + (1 if len(words) % 2 != 0 else 0)
     attempt_counter = 1
 
     for attempt in range(max_attempts):
-        sanitized_keyword = sanitize_directory_name(' '.join(words))
+        current_keyword = ' '.join(words)  # Keep spaces for search, e.g., "hello world HD"
+        sanitized_keyword = sanitize_directory_name(current_keyword)  # e.g., "hello_world_HD"
+        folder_path = f"images/{sanitized_keyword}"  # Folder: images/hello_world_HD
 
-        print(f"Attempting to download with keyword ({attempt_counter}): '{sanitized_keyword}'")
+        print(f"Attempting to download with keyword ({attempt_counter}): '{current_keyword}'")
         if attempt_counter != 1:
             time.sleep(10)
-        attempt_counter = attempt_counter + 1
-
-        downloaded_images = []
+        attempt_counter += 1
 
         def download_function():
-            nonlocal downloaded_images
             print("Downloading Image...")
-            downloaded_images = pi.download(keywords=sanitized_keyword, limit=15)
-            True
+            # Use current_keyword (with spaces) for search, sanitized for folder
+            #downloaded_images = pi.download(keywords=sanitized_keyword, limit=15)
+            crawler = GoogleImageCrawler(storage={"root_dir": folder_path})
+            crawler.crawl(keyword=current_keyword, max_num=15)
 
         # Create a thread to run the download function
         download_thread = threading.Thread(target=download_function)
         download_thread.start()
 
-        # Wait for the download to complete, but only for 5 seconds
+        # Wait for the download to complete, with a 200-second timeout
         download_thread.join(timeout=200)
 
         if download_thread.is_alive():
             print("Download timed out. Proceeding to next step...")
-            # Optionally, you can also check if you got any images
-            if not downloaded_images:
+            # Check if the folder exists and contains images
+            if not os.path.exists(folder_path) or not any(os.path.isfile(os.path.join(folder_path, f)) for f in os.listdir(folder_path)):
                 print("No images downloaded, retrying with reduced keyword...")
+            else:
+                print("Images found in folder. Returning folder path.")
+                return folder_path
         else:
-            print("Download Successful")
-            return downloaded_images
+            # Check folder for images after successful thread completion
+            if os.path.exists(folder_path) and any(os.path.isfile(os.path.join(folder_path, f)) for f in os.listdir(folder_path)):
+                print("Download Successful. Images saved in:", folder_path)
+                return folder_path
+            else:
+                print("No images found in folder, retrying with reduced keyword...")
 
-        # Reduce the number of words in the keyword by 3 for the next attempt
+        # Reduce the number of words in the keyword by 2 for the next attempt
         words = words[:-2]
         if not words:
             print("No more words to try. Exiting...")
             break
 
+    print("All attempts failed. No images downloaded.")
     return None
 
 
@@ -569,5 +578,8 @@ if __name__ == "__main__":
         }
     ]
 
-    new_updated_frames = update_images_path_in_frame(updated_frames)
-    print(new_updated_frames)
+    #new_updated_frames = update_images_path_in_frame(updated_frames)
+    #print(new_updated_frames)
+    search_frame = {}
+    search_frame["search_keyword"] = "ronaldo images"
+    text = download_images(search_frame)
